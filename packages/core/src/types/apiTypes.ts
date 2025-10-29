@@ -4,7 +4,7 @@
  * as specified in the SYSTEM_DESIGN.md document.
  */
 
-import { MessageStatus, Project } from "./dataModels";
+import { Project } from "./dataModels";
 
 // --- Generic API Types ---
 
