@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import messagejs from '@messagejs/client';
+import { messagejs } from '@messagejs/client';
 
 function App() {
   const [message, setMessage] = useState('');
