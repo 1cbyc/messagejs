@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**SendGrid, but for chat apps** 📱
+**SendGrid, but for chat apps**
 
 Send messages via WhatsApp, Telegram, SMS, and more through a simple, unified API.
 
@@ -14,21 +14,21 @@ Send messages via WhatsApp, Telegram, SMS, and more through a simple, unified AP
 
 ---
 
-## 🎯 Overview
+## Overview
 
 MessageJS enables web developers to send messages via multiple chat platforms (WhatsApp, Telegram, SMS, etc.) through a simple SDK, without exposing credentials. Think **EmailJS/SendGrid**, but for messaging apps.
 
 ### Key Features
 
-- ✅ **Simple SDK**: Similar to EmailJS API (`init()` + `send()`)
-- 🔒 **Secure**: Credentials never exposed to frontend
-- 🔌 **Pluggable**: Support for multiple messaging platforms
-- 📦 **Lightweight SDK**: <20KB gzipped
-- 🛡️ **Production-Ready**: Rate limiting, retries, webhooks
+- **Simple SDK**: Similar to EmailJS API (`init()` + `send()`)
+- **Secure**: Credentials never exposed to frontend
+- **Pluggable**: Support for multiple messaging platforms
+- **Lightweight SDK**: <20KB gzipped
+- **Production-Ready**: Rate limiting, retries, webhooks
 
 ---
 
-## 📦 Packages
+## Packages
 
 This is a monorepo containing:
 
@@ -40,7 +40,7 @@ This is a monorepo containing:
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Installation
 
@@ -74,16 +74,13 @@ npm run typecheck
 
 ---
 
-## 📖 Documentation
+## Documentation
 
-- [System Design](docs/SYSTEM_DESIGN.md) - Complete architecture documentation
-- [Unified System Design](docs/SYSTEM_DESIGN_UNIFIED.md) - Production-ready specification
-- [API Reference](docs/API_REFERENCE.md) - Complete API documentation
-- [Quick Start Guide](docs/QUICK_START.md) - Get started in 5 minutes
+- [System Design](system_design.txt) - Complete architecture documentation
 
 ---
 
-## 💻 Usage
+## Usage
 
 ### 1. Initialize the SDK
 
@@ -112,7 +109,7 @@ const result = await messagejs.sendMessage({
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 Client SDK → API Gateway → Connector Router → Third-party APIs
@@ -125,7 +122,7 @@ Client SDK → API Gateway → Connector Router → Third-party APIs
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Runtime**: Node.js 20+
 - **Language**: TypeScript (ESM)
@@ -136,29 +133,29 @@ Client SDK → API Gateway → Connector Router → Third-party APIs
 
 ---
 
-## 📝 Project Status
+## Project Status
 
-🚧 **Early Development** - Core infrastructure is being built.
+**Early Development** - Core infrastructure is being built.
 
 ### Completed
-- ✅ Project architecture and design
-- ✅ Type system foundation
-- ✅ Monorepo configuration
-- ✅ Documentation
+- Project architecture and design
+- Type system foundation
+- Monorepo configuration
+- Documentation
 
 ### In Progress
-- 🚧 Backend API implementation
-- 🚧 Connector implementations
-- 🚧 Database layer
+- Backend API implementation
+- Connector implementations
+- Database layer
 
 ### Planned
-- ⏳ Dashboard UI
-- ⏳ Testing framework
-- ⏳ CI/CD pipeline
+- Dashboard UI
+- Testing framework
+- CI/CD pipeline
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please read our contributing guidelines first.
 
@@ -170,16 +167,16 @@ Contributions are welcome! Please read our contributing guidelines first.
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 Inspired by [EmailJS](https://www.emailjs.com/) and [SendGrid](https://sendgrid.com/).
 
 ---
 
-**Built with ❤️ by the MessageJS Team**
+**Built by the Isaac Emmanuel**
