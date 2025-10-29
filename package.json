@@ -1,21 +1,43 @@
 {
-  "name": "messagejs-monorepo",
+  "name": "messagejs",
   "version": "0.1.0",
   "private": true,
-  "description": "The root of the MessageJS monorepo, containing all packages for the MessageJS ecosystem.",
-  "scripts": {
-    "dev:core": "npm run dev --workspace=@messagejs/core",
-    "dev:client": "npm run dev --workspace=@messagejs/client",
-    "build": "npm run build --workspaces --if-present",
-    "clean": "npm run clean --workspaces --if-present",
-    "install:all": "npm install"
-  },
+  "description": "SendGrid, but for chat apps - Send messages via WhatsApp, Telegram, SMS, and more",
   "workspaces": [
     "packages/*"
   ],
-  "engines": {
-    "node": ">=18.0.0"
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "dev": "npm run dev --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "clean": "npm run clean --workspaces && rm -rf node_modules",
+    "core": "npm run dev --workspace=packages/core",
+    "client": "npm run dev --workspace=packages/client",
+    "dashboard": "npm run dev --workspace=packages/dashboard"
   },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/messagejs/messagejs.git"
+  },
+  "keywords": [
+    "messaging",
+    "whatsapp",
+    "telegram",
+    "sms",
+    "sdk",
+    "api",
+    "chat"
+  ],
   "author": "MessageJS Team",
   "license": "MIT"
 }

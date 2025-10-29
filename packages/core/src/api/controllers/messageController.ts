@@ -7,7 +7,7 @@ import {
   SendMessageRequest,
   SendMessageSuccessResponse,
   ApiErrorResponse,
-} from '@messagejs/shared-types';
+} from '../../types/apiTypes';
 import crypto from 'crypto';
 
 /**

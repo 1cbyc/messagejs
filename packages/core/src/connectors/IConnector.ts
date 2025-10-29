@@ -5,7 +5,7 @@
  * This design is based on the specifications in the SYSTEM_DESIGN.md document.
  */
 
-import { ConnectorType, MessageStatus, Template } from '../types/dataModels';
+import { ConnectorType, MessageStatus, Template } from './dataModels';
 
 /**
  * Defines the options for sending a message through a connector.

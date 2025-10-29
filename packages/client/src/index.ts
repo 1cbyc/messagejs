@@ -19,7 +19,7 @@ export interface MessageJSConfig {
   /**
    * The base URL of the MessageJS API. Defaults to the official cloud endpoint.
    * Useful for self-hosted instances.
-   * @default "https://api.messagejs.com"
+   * @default "https://api.messagejs.com/v1"
    */
   baseUrl?: string;
 }
