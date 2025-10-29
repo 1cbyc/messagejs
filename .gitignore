@@ -142,3 +142,5 @@ hide/
 .cursor/
 .zed-workspace
 rules
+*.txt
+.ai-context
