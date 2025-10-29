@@ -1,0 +1,21 @@
+{
+  "name": "messagejs-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The root of the MessageJS monorepo, containing all packages for the MessageJS ecosystem.",
+  "scripts": {
+    "dev:core": "npm run dev --workspace=@messagejs/core",
+    "dev:client": "npm run dev --workspace=@messagejs/client",
+    "build": "npm run build --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present",
+    "install:all": "npm install"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "MessageJS Team",
+  "license": "MIT"
+}
