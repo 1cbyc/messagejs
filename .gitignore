@@ -139,4 +139,7 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .cursor/
 .zed-workspace
-*.md
+
+# Hide folder for temporary files
+hide/
+
