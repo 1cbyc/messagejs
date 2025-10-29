@@ -19,7 +19,7 @@ export interface MessageJSConfig {
   /**
    * The base URL of the MessageJS API. Defaults to the official cloud endpoint.
    * Useful for self-hosted instances.
-   * @default "https://api.messagejs.com/v1"
+   * @default "https://api.messagejs.pro/v1"
    */
   baseUrl?: string;
 }
@@ -81,7 +81,7 @@ export interface SendResult {
  */
 class MessageJS {
   private apiKey?: string;
-  private baseUrl: string = 'https://api.messagejs.com/v1';
+  private baseUrl: string = 'https://api.messagejs.pro/v1';
 
   /**
    * Initializes the SDK with your project's public API key and optional configuration.
