@@ -2,14 +2,24 @@
   "name": "@messagejs/shared-types",
   "version": "0.1.0",
   "private": true,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "rimraf dist && tsc",
-    "clean": "rimraf dist"
+  "description": "Shared TypeScript types for MessageJS packages",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
   },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {},
   "devDependencies": {
-    "rimraf": "^5.0.7",
-    "typescript": "^5.4.5"
+    "typescript": "^5.3.3"
   }
 }
