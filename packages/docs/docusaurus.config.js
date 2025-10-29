@@ -6,7 +6,7 @@ const config = {
   tagline: 'SendGrid, but for chat apps',
   favicon: 'img/favicon.ico',
 
-  url: 'https://docs.messagejs.com',
+  url: 'https://docs.messagejs.pro',
   baseUrl: '/',
 
   organizationName: 'messagejs',

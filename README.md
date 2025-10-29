@@ -89,7 +89,7 @@ import messagejs from '@messagejs/client';
 
 messagejs.init({
   apiKey: 'sk_live_your_api_key',
-  baseUrl: 'https://api.messagejs.com'
+  baseUrl: 'https://api.messagejs.pro'
 });
 ```
 
