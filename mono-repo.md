@@ -32,3 +32,13 @@ messagejs/
 ├── README.md
 ├── package.json           # Monorepo root
 └── turbo.json or nx.json  # (if using Turborepo or Nx)
+
+<!-- shorter summary -->
+messagejs/
+├── packages/
+│   ├── core/              # Backend API ✅
+│   ├── client/            # Frontend SDK ✅
+│   ├── dashboard/         # React/Next.js dashboard ✅ NEW
+│   ├── docs/              # Documentation (Docusaurus) ✅ NEW
+│   ├── examples/          # Example apps & demos ✅ NEW
+│   └── shared-types/      # Shared types
