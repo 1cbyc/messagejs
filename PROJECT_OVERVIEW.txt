@@ -1,0 +1,106 @@
+MessageJS — System Overview
+====================================
+
+PURPOSE
+-------
+Open-source messaging API platform. Like EmailJS/SendGrid for chat apps.
+Provides SDK + backend API to send messages via WhatsApp, Telegram, SMS, etc.
+
+ARCHITECTURE
+------------
+Client SDK → API Gateway → Connector Router → Third-party APIs
+
+COMPONENTS
+----------
+- core: Node.js/Express backend (PostgreSQL + Redis)
+- client: TypeScript SDK (<20KB)
+- dashboard: React/Next.js UI
+- docs: Docusaurus site
+- examples: Sample integrations
+
+MONOREPO
+--------
+messagejs/
+├─ packages/
+│  ├─ core/
+│  ├─ client/
+│  ├─ dashboard/
+│  ├─ docs/
+│  └─ examples/
+
+SECURITY
+--------
+- API keys hashed with bcrypt
+- Connector credentials encrypted (AES-256-GCM)
+- Rate limiting (Redis sliding window)
+- JWT for dashboard auth
+- Input validation (Zod)
+
+RELIABILITY
+-----------
+- Idempotency support (Idempotency-Key header)
+- BullMQ job queue + retries
+- Exponential backoff
+- Webhooks for status
+- 99.9% uptime target
+
+API
+---
+POST /api/v1/messages         # Send message
+GET  /api/v1/messages         # List messages
+POST /api/v1/projects         # Create project
+POST /api/v1/projects/:id/keys        # Create API key
+CRUD /api/v1/projects/:id/connectors  # Manage connectors
+
+CONNECTORS
+----------
+Pluggable architecture with uniform interface:
+- WhatsApp (Cloud API)
+- Telegram (Bot API)
+- Twilio (SMS)
+- SMTP
+
+Each implements: validate(), sendMessage(), getStatus()
+
+SDK
+---
+messagejs.init(apiKey, projectId)
+messagejs.send({ to, message, connector })
+
+TECH STACK
+----------
+- Node.js 20+ / Express
+- PostgreSQL 15+
+- Redis 7+ / BullMQ
+- TypeScript (ESM)
+- Prisma / Drizzle ORM
+- Zod validation
+- Pino logging
+
+DATA MODEL
+----------
+- users (id, email, password_hash)
+- projects (id, user_id, name)
+- api_keys (id, project_id, key_hash)
+- connectors (id, project_id, type, credentials_encrypted)
+- messages (id, project_id, status, to, external_id)
+- templates (id, project_id, content, variables)
+- webhooks (id, project_id, url, events)
+
+BRANCHING
+---------
+- main: production
+- dev: integration
+- feature/<package>-<description>
+
+ROADMAP
+-------
+Phase 1 (MVP): Basic API + SDK + 1 connector
+Phase 2: PostgreSQL, Redis, Dashboard, Webhooks
+Phase 3: Billing, Analytics, Enterprise features
+
+REFERENCE
+---------
+See SYSTEM_DESIGN.md for full details
+See SYSTEM_DESIGN_UNIFIED.md for production spec
+See PROJECT_OVERVIEW.md for quick overview

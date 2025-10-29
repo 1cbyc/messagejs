@@ -1,0 +1,25 @@
+- Always follow the architecture in SYSTEM_DESIGN.md and PROJECT_OVERVIEW.md
+- Never hardcode secrets, tokens, API keys or credentials.
+- Always write TypeScript for new files (ESM syntax)
+- Use async/await with error handling
+- Keep SDK lightweight and dependency-free
+- All new routes must follow REST naming conventions.
+- Always document new endpoints and methods
+- For new routes: follow REST naming (GET/POST/PUT/DELETE)
+- Keep backend modular (Express routers, services, connectors)
+- Client SDK must remain lightweight (<20KB)
+- Document new code in JSDoc style
+- Avoid cross-package imports except via workspace dependencies
+- Follow clean code principles: small functions, clear naming
+- Never add unnecessary comments in code
+- Always create feature branches using pattern: feature/<package>-<description>
+  (e.g. feature/core-add-whatsapp-connector)
+- For new backend code, use Express routers and services pattern.
+- For new SDK code, keep bundle size <20KB gzipped.
+- Validate inputs with Zod or Joi before processing.
+- Document every public API or SDK method with JSDoc.
+- Write at least one unit test per new module.
+- Never commit `.env` files or real credentials.
+- Keep SDK, backend, and docs in sync.
+- Follow clean code principles (small, self-contained functions).
+- Ensure backward compatibility with existing endpoints.
