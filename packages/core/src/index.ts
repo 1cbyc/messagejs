@@ -7,11 +7,15 @@
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import messageRouter from './api/routes/messageRoutes';
+import webhookRouter from './api/routes/webhookRoutes';
+import healthRouter from './api/routes/healthRoutes';
+import logger, { httpLogger } from './lib/logger';
 
 // Load environment variables from a .env file into process.env
 dotenv.config();
 
 const app = express();
+
 
 // The port the application will listen on.
 // It will use the PORT from the .env file, or default to 3001.
@@ -23,31 +27,38 @@ const PORT = process.env.PORT || 3001;
 // This is essential for our REST API to accept JSON payloads.
 app.use(express.json());
 
-// --- Health Check Route ---
-
-/**
- * @route GET /
- * @description A simple health check endpoint to confirm that the API is running.
- * @access Public
- */
-app.get('/', (req: Request, res: Response) => {
-  res.status(200).json({
-    status: 'ok',
-    message: 'Welcome to the MessageJS Core API!',
-  });
-});
+// Add the pino-http logger middleware.
+// This will automatically log every incoming request and its response.
+app.use(httpLogger);
 
 // --- API Routes ---
 
+// Mount the health check router.
+app.use('/api/v1/health', healthRouter);
+
 // Mount the message router for all requests to /api/v1/messages.
 app.use('/api/v1/messages', messageRouter);
+
+// Mount the webhook router for all requests to /api/v1/webhooks.
+app.use('/api/v1/webhooks', webhookRouter);
+
+// --- Error Handling ---
+// Generic error handler to catch any other errors
+app.use((err: Error, req: Request, res: Response) => {
+  logger.error({ err, url: req.url }, 'Unhandled error in request');
+  res.status(500).json({
+    error: {
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'An unexpected error occurred',
+    },
+  });
+});
 
 // --- Start Server ---
 
 // Start the Express server and listen for incoming connections on the specified port.
 app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`MessageJS Core API listening on http://localhost:${PORT}`);
+  logger.info({ port: PORT }, 'MessageJS Core API started successfully');
 });
 
 /**
