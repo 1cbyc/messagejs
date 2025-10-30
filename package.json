@@ -16,7 +16,8 @@
     "core": "npm run dev --workspace=packages/core",
     "client": "npm run dev --workspace=packages/client",
     "dashboard": "npm run dev --workspace=packages/dashboard",
-    "website": "npm run dev --workspace=packages/website"
+    "website": "npm run dev --workspace=packages/website",
+    "build:dashboard": "npm run build --workspace=@messagejs/shared-types && npm run build --workspace=packages/dashboard"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
