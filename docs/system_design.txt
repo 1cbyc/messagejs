@@ -113,8 +113,9 @@ The system is composed of several key components that work together to deliver t
 1.  **`messagejs-client` (TypeScript SDK):** A lightweight library installed in a developer's frontend application. It exposes simple functions to send messages. It is responsible for making a secure, authenticated request to the `messagejs-core` API.
 2.  **`messagejs-core` (Node.js/Express Backend):** The central nervous system. It receives requests from the SDK, validates the API key, fetches the corresponding project and service credentials, loads the appropriate connector, and dispatches the message to the third-party API.
 3.  **`messagejs-dashboard` (React Web App):** A user-facing application for developers to sign up, create projects, generate API keys, manage message templates, and view logs and analytics.
-4.  **Connectors (Internal Modules):** Pluggable modules within `messagejs-core`, each dedicated to a specific messaging service (e.g., `whatsapp.js`, `telegram.js`). They conform to a standard interface.
-5.  **Database (MongoDB/PostgreSQL):** Persists all user data, projects, encrypted credentials, message logs, and other application state.
+4.  **`messagejs-website` (Marketing Website):** A public-facing Next.js website featuring hero sections, pricing, features showcase, and marketing content to attract and convert users.
+5.  **Connectors (Internal Modules):** Pluggable modules within `messagejs-core`, each dedicated to a specific messaging service (e.g., `whatsapp.js`, `telegram.js`). They conform to a standard interface.
+6.  **Database (MongoDB/PostgreSQL):** Persists all user data, projects, encrypted credentials, message logs, and other application state.
 
 ### 2.2. Architecture Diagrams (Mermaid Syntax)
 
@@ -131,6 +132,7 @@ graph TD
     subgraph "MessageJS Platform"
         C(messagejs-core API)
         D(messagejs-dashboard)
+        W(messagejs-website)
         E[Database (MongoDB/Postgres)]
     end
 
@@ -141,6 +143,7 @@ graph TD
     end
 
     Dev[Developer] -- "Manages Project" --> D
+    Visitor[Visitor] -- "Browse & Learn" --> W
 
     B -- "POST /api/v1/send\n(apiKey)" --> C
     D -- "Manages (CRUD)" --> E
@@ -262,6 +265,22 @@ function send(options: SendOptions): Promise<any>;
 4.  **Service Configuration:** A secure form to add, edit, and manage credentials for services like WhatsApp, Telegram, etc.
 5.  **Template Editor:** A simple UI to create and manage message templates.
 6.  **Logs Explorer:** A table to view the history of sent messages, their status, and any errors.
+
+### 3.4. `messagejs-website` (Marketing Website)
+
+*   **Framework:** Next.js with App Router.
+*   **Styling:** Tailwind CSS with custom design system.
+*   **Purpose:** Public-facing marketing website for MessageJS.
+
+#### Key Features
+
+1.  **Hero Section:** Prominent landing with value proposition and CTAs.
+2.  **Features Showcase:** Highlight key features (Simple SDK, Secure, Multi-platform, etc.).
+3.  **Platforms/Integrations:** Display supported messaging platforms (WhatsApp, Telegram, SMS).
+4.  **Code Examples:** Interactive code snippets showing quick start.
+5.  **Pricing Section:** Transparent pricing tiers (Free, Starter, Enterprise).
+6.  **Documentation Links:** Easy navigation to docs, GitHub, and dashboard.
+7.  **Footer:** Company information, links, and social media.
 
 ## 4. Database Schema
 

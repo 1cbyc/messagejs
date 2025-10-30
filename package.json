@@ -15,7 +15,8 @@
     "clean": "npm run clean --workspaces && rm -rf node_modules",
     "core": "npm run dev --workspace=packages/core",
     "client": "npm run dev --workspace=packages/client",
-    "dashboard": "npm run dev --workspace=packages/dashboard"
+    "dashboard": "npm run dev --workspace=packages/dashboard",
+    "website": "npm run dev --workspace=packages/website"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
