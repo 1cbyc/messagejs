@@ -38,6 +38,11 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+      colorMode: {
+        defaultMode: 'dark',
+        disableSwitch: false,
+        respectPrefersColorScheme: false,
+      },
       navbar: {
         title: 'MessageJS',
         logo: {
@@ -51,11 +56,70 @@ const config = {
             position: 'left',
             label: 'Docs',
           },
+          {
+            href: 'https://app.messagejs.pro',
+            label: 'Dashboard',
+            position: 'right',
+          },
+          {
+            href: 'https://github.com/1cbyc/messagejs',
+            label: 'GitHub',
+            position: 'right',
+          },
         ],
       },
       footer: {
         style: 'dark',
         copyright: `Copyright © ${new Date().getFullYear()} MessageJS. Built with Docusaurus.`,
+        links: [
+          {
+            title: 'Product',
+            items: [
+              {
+                label: 'Features',
+                href: 'https://messagejs.pro#features',
+              },
+              {
+                label: 'Pricing',
+                href: 'https://messagejs.pro#pricing',
+              },
+              {
+                label: 'Integrations',
+                href: 'https://messagejs.pro#integrations',
+              },
+            ],
+          },
+          {
+            title: 'Resources',
+            items: [
+              {
+                label: 'Documentation',
+                to: '/intro',
+              },
+              {
+                label: 'Dashboard',
+                href: 'https://app.messagejs.pro',
+              },
+              {
+                label: 'GitHub',
+                href: 'https://github.com/1cbyc/messagejs',
+              },
+            ],
+          },
+          {
+            title: 'Company',
+            items: [
+              {
+                label: 'About',
+                href: 'https://messagejs.pro#about',
+              },
+              {
+                label: 'Contact',
+                href: 'https://messagejs.pro#contact',
+              },
+            ],
+          },
+        ],
       },
     }),
 };
