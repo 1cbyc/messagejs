@@ -47,7 +47,7 @@ app.use('/api/v1/messages', messageRouter);
 // Start the Express server and listen for incoming connections on the specified port.
 app.listen(PORT, () => {
   // eslint-disable-next-line no-console
-  console.log(`🚀 MessageJS Core API listening on http://localhost:${PORT}`);
+  console.log(`MessageJS Core API listening on http://localhost:${PORT}`);
 });
 
 /**

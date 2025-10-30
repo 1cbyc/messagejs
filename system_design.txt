@@ -611,7 +611,7 @@ GET    /api/v1/analytics/connectors
 **Request:**
 ```http
 POST /api/v1/messages HTTP/1.1
-Host: api.messagejs.com
+Host: api.messagejs.pro
 Content-Type: application/json
 Authorization: Bearer sk_live_abc123...
 
@@ -1165,7 +1165,7 @@ class MessageJS {
   
   constructor() {
     this.config = {
-      endpoint: 'https://api.messagejs.com',
+      endpoint: 'https://api.messagejs.pro',
       timeout: 10000,
       retries: 1
     };
@@ -1236,7 +1236,7 @@ export { messagejs };
 <!DOCTYPE html>
 <html>
 <head>
-  <script src="https://cdn.messagejs.com/v1/messagejs.js"></script>
+  <script src="https://cdn.messagejs.pro/v1/messagejs.js"></script>
 </head>
 <body>
   <script>
@@ -1439,11 +1439,11 @@ REFRESH_TOKEN_SECRET=your-refresh-secret
 ENCRYPTION_KEY=your-32-byte-hex-key
 
 # API
-API_BASE_URL=https://api.messagejs.com
+API_BASE_URL=https://api.messagejs.pro
 PORT=3000
 
 # CORS
-ALLOWED_ORIGINS=https://app.messagejs.com,https://example.com
+ALLOWED_ORIGINS=https://app.messagejs.pro,https://example.com
 
 # External APIs
 WHATSAPP_API_URL=https://graph.facebook.com
@@ -1591,15 +1591,15 @@ jobs:
 
 ## Next Steps
 
-1. ✅ Complete system design
-2. ⏳ Set up monorepo structure
-3. ⏳ Implement database schema
-4. ⏳ Build core API
-5. ⏳ Create first connector (WhatsApp)
-6. ⏳ Build client SDK
-7. ⏳ Create dashboard UI
-8. ⏳ Write documentation
-9. ⏳ Add tests and CI/CD
+- [x] Complete system design
+- [ ] Set up monorepo structure
+- [ ] Implement database schema
+- [ ] Build core API
+- [ ] Create first connector (WhatsApp)
+- [ ] Build client SDK
+- [ ] Create dashboard UI
+- [ ] Write documentation
+- [ ] Add tests and CI/CD
 
 ---
 

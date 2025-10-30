@@ -36,9 +36,9 @@ messagejs/
 <!-- shorter summary -->
 messagejs/
 ├── packages/
-│   ├── core/              # Backend API ✅
-│   ├── client/            # Frontend SDK ✅
-│   ├── dashboard/         # React/Next.js dashboard ✅ NEW
-│   ├── docs/              # Documentation (Docusaurus) ✅ NEW
-│   ├── examples/          # Example apps & demos ✅ NEW
+│   ├── core/              # Backend API
+│   ├── client/            # Frontend SDK
+│   ├── dashboard/         # React/Next.js dashboard NEW
+│   ├── docs/              # Documentation (Docusaurus) NEW
+│   ├── examples/          # Example apps & demos NEW
 │   └── shared-types/      # Shared types
