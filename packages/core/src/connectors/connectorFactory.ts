@@ -7,8 +7,9 @@
  * implementations, making the system modular and easy to extend.
  */
 
-import { IConnector } from '@messagejs/shared-types';
+import { ConnectorType, IConnector } from '@messagejs/shared-types';
 import { ServiceType } from '@prisma/client';
+import { toServiceType } from '../utils/type-mapping';
 import { WhatsAppConnector } from './whatsappConnector';
 
 // Define a type for the decrypted credentials object for better type safety.
@@ -29,18 +30,19 @@ export class ConnectorFactory {
    * @throws {Error} If the provided connector type is not supported.
    */
   public static create(
-    type: ServiceType,
+    type: ConnectorType,
     credentials: DecryptedCredentials,
   ): IConnector {
-    switch (type) {
+    const serviceType = toServiceType(type);
+
+    switch (serviceType) {
       case ServiceType.WHATSAPP:
-        // Create and return an instance of the WhatsApp connector.
         return new WhatsAppConnector(credentials);
 
-      // case 'TELEGRAM':
+      // case ServiceType.TELEGRAM:
       //   return new TelegramConnector(credentials); // Example for a future connector
 
-      // case 'TWILIO_SMS':
+      // case ServiceType.TWILIO_SMS:
       //   return new TwilioConnector(credentials); // Example for a future connector
 
       default:
