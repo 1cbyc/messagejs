@@ -8,6 +8,7 @@ import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import messageRouter from './api/routes/messageRoutes';
 import webhookRouter from './api/routes/webhookRoutes';
+import healthRouter from './api/routes/healthRoutes';
 import logger, { httpLogger } from './lib/logger';
 
 // Load environment variables from a .env file into process.env
@@ -29,21 +30,10 @@ app.use(express.json());
 // This will automatically log every incoming request and its response.
 app.use(httpLogger);
 
-// --- Health Check Route ---
-
-/**
- * @route GET /
- * @description A simple health check endpoint to confirm that the API is running.
- * @access Public
- */
-app.get('/', (req: Request, res: Response) => {
-  res.status(200).json({
-    status: 'ok',
-    message: 'Welcome to the MessageJS Core API!',
-  });
-});
-
 // --- API Routes ---
+
+// Mount the health check router.
+app.use('/api/v1/health', healthRouter);
 
 // Mount the message router for all requests to /api/v1/messages.
 app.use('/api/v1/messages', messageRouter);
