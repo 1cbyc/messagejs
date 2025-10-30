@@ -6,6 +6,8 @@
 import { Router } from 'express';
 import { sendMessage } from '../controllers/messageController';
 import { validateApiKey } from '../middleware/authMiddleware';
+import { validate } from '../middleware/validationMiddleware';
+import { sendMessageSchema } from '../validation/messageValidation';
 
 // Create a new Express router instance.
 const messageRouter = Router();
@@ -19,6 +21,7 @@ const messageRouter = Router();
 messageRouter.post(
   '/',
   validateApiKey,
+  validate(sendMessageSchema),
   sendMessage,
 );
 

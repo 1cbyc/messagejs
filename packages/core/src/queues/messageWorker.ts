@@ -12,6 +12,7 @@ import dotenv from 'dotenv';
 import { MESSAGE_QUEUE_NAME, MessageJobData } from './messageQueue';
 import prisma from '../lib/prisma';
 import { ConnectorFactory } from '../connectors/connectorFactory';
+import { decrypt } from '../utils/encryption';
 
 // Load environment variables from .env file.
 dotenv.config();
@@ -61,14 +62,16 @@ const processMessageJob = async (job: Job<MessageJobData>) => {
     throw new Error(`No template found for project associated with MessageLog ID: ${messageLogId}`);
   }
 
-  // Step 2: "Decrypt" credentials. For now, we parse the JSON string.
-  // TODO: Replace this with actual AES-256 decryption logic.
+  // Step 2: Decrypt the service credentials.
   let credentials;
   try {
-    // Assuming credentials are a JSON string like: '{"accessToken": "...", "phoneNumberId": "..."}'
-    credentials = JSON.parse(messageLog.service.credentials);
-  } catch (error) {
-    throw new Error('Failed to parse credentials. Ensure they are stored as a valid JSON string.');
+    const decryptedCredentialsString = decrypt(messageLog.service.credentials);
+    credentials = JSON.parse(decryptedCredentialsString);
+  } catch (error: any) {
+    // If decryption or parsing fails, the job cannot proceed.
+    // Throwing an error will cause BullMQ to retry the job according to our backoff strategy.
+    console.error(`[Worker] Critical error processing job ${job.id}: Failed to decrypt or parse credentials.`, error);
+    throw new Error(`Failed to decrypt credentials for MessageLog ID: ${messageLogId}. Reason: ${error.message}`);
   }
 
   // Step 3: Instantiate the connector using the factory.
@@ -136,20 +139,20 @@ console.log('🚀 Message worker is running and listening for jobs...');
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('SIGTERM signal received: closing message worker...');
-  
+
   try {
     // Close the BullMQ worker
     await messageWorker.close();
     console.log('Message worker closed.');
-    
+
     // Disconnect Prisma client
     await prisma.$disconnect();
     console.log('Prisma client disconnected.');
-    
+
     // Close Redis connection
     await redisConnection.quit();
     console.log('Redis connection closed.');
-    
+
     // Exit the process
     process.exit(0);
   } catch (error) {

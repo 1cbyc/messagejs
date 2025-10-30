@@ -4,6 +4,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import bcrypt from 'bcrypt';
 import prisma from '../../lib/prisma';
 
 /**
@@ -50,14 +51,30 @@ export const validateApiKey = async (
   }
 
   try {
-    // Find the project associated with the provided API key.
-    // In a production environment, you might also want to select only necessary fields.
-    const project = await prisma.project.findUnique({
-      where: { apiKey },
+    // The key from the header should be a concatenation of the public and secret keys.
+    // We expect a format like `<publicKey>_sk_<secretKey>`.
+    const keyParts = apiKey.split('_sk_');
+    if (keyParts.length !== 2) {
+      return res.status(401).json({
+        error: {
+          code: 'AUTH_INVALID_FORMAT',
+          message:
+            "API key is improperly formatted. Expected format: '<publicKey>_sk_<secretKey>'.",
+        },
+      });
+    }
+
+    const [publicKey, secretKey] = keyParts;
+
+    // Find the API key record in the database using the public key.
+    const apiKeyRecord = await prisma.apiKey.findUnique({
+      where: { publicKey },
     });
 
-    // If no project is found for the given key, or if the project is inactive, deny access.
-    if (!project) {
+    // If no key is found, or if the secret doesn't match, deny access.
+    // We use a general "not valid" message to avoid leaking information
+    // about which part of the key was incorrect.
+    if (!apiKeyRecord) {
       return res.status(403).json({
         error: {
           code: 'AUTH_INVALID_KEY',
@@ -66,11 +83,25 @@ export const validateApiKey = async (
       });
     }
 
-    // Attach the validated project information to the request object.
-    // This makes it available to downstream controllers.
+    // Compare the provided secret key with the stored hash using bcrypt.
+    const isSecretValid = await bcrypt.compare(
+      secretKey,
+      apiKeyRecord.secretKeyHash,
+    );
+
+    if (!isSecretValid) {
+      return res.status(403).json({
+        error: {
+          code: 'AUTH_INVALID_KEY',
+          message: 'The provided API key is not valid.',
+        },
+      });
+    }
+
+    // Attach the validated API key and project information to the request object.
     req.apiKey = {
-      id: project.apiKey, // The API key itself
-      projectId: project.id,
+      id: apiKeyRecord.id,
+      projectId: apiKeyRecord.projectId,
     };
 
     // The key is valid, proceed to the next middleware or controller.
