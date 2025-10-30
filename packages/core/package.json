@@ -20,6 +20,8 @@
   "dependencies": {
     "@prisma/client": "^6.18.0",
     "@prisma/extension-accelerate": "^2.0.2",
+    "@sentry/node": "^10.22.0",
+    "@sentry/profiling-node": "^10.22.0",
     "@types/bcrypt": "^6.0.0",
     "bcrypt": "^6.0.0",
     "bullmq": "^5.62.1",
