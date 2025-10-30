@@ -11,7 +11,6 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { withAccelerate } from '@prisma/extension-accelerate';
 
 // Declare a global variable to hold the Prisma Client instance.
 // This is a workaround to prevent re-initialization during hot-reloading in development.
@@ -22,8 +21,9 @@ declare global {
 
 // Instantiate the Prisma Client.
 // If `globalThis.prisma` already exists (from a previous hot-reload), reuse it.
-// Otherwise, create a new instance and extend it with Accelerate.
-const prisma = globalThis.prisma || new PrismaClient().$extends(withAccelerate());
+// Otherwise, create a new instance.
+// Note: Accelerate extension temporarily removed due to type compatibility issues
+const prisma = globalThis.prisma || new PrismaClient();
 
 // In development, assign the new instance to the global variable.
 if (process.env.NODE_ENV !== 'production') {

@@ -10,13 +10,13 @@
  */
 
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
+import logger from '../lib/logger';
 
 // Define the encryption algorithm and parameters.
 // AES-256-GCM is a modern, secure choice for authenticated encryption,
 // meaning it provides both confidentiality and data integrity.
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16; // Initialization Vector length (128 bits)
-const AUTH_TAG_LENGTH = 16; // GCM authentication tag length (128 bits)
 
 // Retrieve the encryption key from environment variables.
 // This key MUST be kept secret and should be a 32-character (256-bit) string.
@@ -94,7 +94,7 @@ export const decrypt = (encryptedText: string): string => {
     return decrypted;
   } catch (error) {
     // Log the decryption error for security auditing but return a generic message.
-    console.error('Decryption failed:', error);
+    logger.error({ error }, 'Decryption failed - possible tampering or corruption');
     throw new Error('Failed to decrypt data. The data may be corrupt or tampered with.');
   }
 };

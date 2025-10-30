@@ -4,12 +4,12 @@
 
 import { Request, Response } from 'express';
 import {
-  SendMessageRequest,
   SendMessageSuccessResponse,
   ApiErrorResponse,
 } from '../../types/apiTypes';
 import prisma from '../../lib/prisma';
 import { messageQueue } from '../../queues/messageQueue';
+import logger from '../../lib/logger';
 
 /**
  * @controller sendMessage
@@ -24,7 +24,7 @@ import { messageQueue } from '../../queues/messageQueue';
  * @returns {Promise<Response>} A promise that resolves to the Express response.
  */
 export const sendMessage = async (
-  req: Request<{}, {}, SendMessageRequest>,
+  req: Request,
   res: Response<SendMessageSuccessResponse | ApiErrorResponse>,
 ): Promise<Response> => {
   try {
@@ -96,7 +96,7 @@ export const sendMessage = async (
       details: 'Message has been successfully queued for processing.',
     });
   } catch (error: any) {
-    console.error('Failed to process message:', error);
+    logger.error({ error, projectId: req.apiKey?.projectId }, 'Failed to process message');
     return res.status(500).json({
       error: {
         code: 'INTERNAL_SERVER_ERROR',

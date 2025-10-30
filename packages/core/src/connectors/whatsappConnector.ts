@@ -13,6 +13,7 @@ import {
   ConnectorStatus,
 } from './IConnector';
 import { ServiceType } from '../types/dataModels';
+import logger from '../lib/logger';
 
 /**
  * Defines the expected structure of the credentials object for this connector.
@@ -122,7 +123,7 @@ export class WhatsAppConnector implements IConnector {
         details: { response: responseData },
       };
     } catch (error: any) {
-      console.error(`[WhatsAppConnector] Failed to send message: ${error.message}`);
+      logger.error({ error, recipient: to }, 'WhatsApp connector failed to send message');
       return {
         success: false,
         error: error.message,

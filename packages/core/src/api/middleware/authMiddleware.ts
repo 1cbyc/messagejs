@@ -6,6 +6,7 @@
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcrypt';
 import prisma from '../../lib/prisma';
+import logger from '../../lib/logger';
 
 /**
  * @middleware validateApiKey
@@ -107,7 +108,7 @@ export const validateApiKey = async (
     // The key is valid, proceed to the next middleware or controller.
     return next();
   } catch (error) {
-    console.error('API Key validation error:', error);
+    logger.error({ err: error }, 'API Key validation error');
     return res.status(500).json({
       error: {
         code: 'INTERNAL_SERVER_ERROR',
