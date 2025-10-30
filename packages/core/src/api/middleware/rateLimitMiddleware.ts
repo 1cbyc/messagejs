@@ -57,7 +57,8 @@ export const rateLimitMiddleware = async (
 
   // --- Dynamic Limiter Creation ---
   // The rate limit is defined as requests per hour in the schema.
-  const points = apiKeyRateLimit ?? 1000; // Default to 1000 reqs/hour if not set.
+  const defaultRateLimit = parseInt(process.env.DEFAULT_RATE_LIMIT ?? '1000', 10);
+  const points = apiKeyRateLimit ?? defaultRateLimit; // Default to configured rate if not set in DB.
   const duration = 3600; // 1 hour in seconds.
 
   const limiter = new RateLimiterRedis({
