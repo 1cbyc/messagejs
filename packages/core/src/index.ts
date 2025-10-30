@@ -7,6 +7,7 @@
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import messageRouter from './api/routes/messageRoutes';
+import webhookRouter from './api/routes/webhookRoutes';
 import logger, { httpLogger } from './lib/logger';
 
 // Load environment variables from a .env file into process.env
@@ -46,6 +47,9 @@ app.get('/', (req: Request, res: Response) => {
 
 // Mount the message router for all requests to /api/v1/messages.
 app.use('/api/v1/messages', messageRouter);
+
+// Mount the webhook router for all requests to /api/v1/webhooks.
+app.use('/api/v1/webhooks', webhookRouter);
 
 // --- Start Server ---
 
