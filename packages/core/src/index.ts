@@ -7,6 +7,7 @@
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import messageRouter from './api/routes/messageRoutes';
+import logger, { httpLogger } from './lib/logger';
 
 // Load environment variables from a .env file into process.env
 dotenv.config();
@@ -22,6 +23,10 @@ const PORT = process.env.PORT || 3001;
 // Enable parsing of JSON request bodies.
 // This is essential for our REST API to accept JSON payloads.
 app.use(express.json());
+
+// Add the pino-http logger middleware.
+// This will automatically log every incoming request and its response.
+app.use(httpLogger);
 
 // --- Health Check Route ---
 
@@ -46,8 +51,7 @@ app.use('/api/v1/messages', messageRouter);
 
 // Start the Express server and listen for incoming connections on the specified port.
 app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`MessageJS Core API listening on http://localhost:${PORT}`);
+  logger.info({ port: PORT }, 'MessageJS Core API started successfully');
 });
 
 /**

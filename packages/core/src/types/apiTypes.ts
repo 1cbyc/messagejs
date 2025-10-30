@@ -43,10 +43,10 @@ export interface ApiErrorResponse {
  * This is the primary data contract for the client SDK.
  */
 export interface SendMessageRequest {
-  connectorId: string;
+  serviceId: string;
   templateId: string;
-  to: string;
-  variables: Record<string, any>;
+  recipient: string;
+  variables?: Record<string, any>;
   metadata?: Record<string, any>;
 }
 
