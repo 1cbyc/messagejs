@@ -4,7 +4,7 @@
  * defines initial routes, and starts the HTTP server.
  */
 
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
 import messageRouter from './api/routes/messageRoutes';
 import webhookRouter from './api/routes/webhookRoutes';
@@ -55,7 +55,7 @@ app.use('/api/v1/auth', authRouter);
 
 // --- Error Handling ---
 // Generic error handler to catch any other errors
-app.use((err: Error, req: Request, res: Response) => {
+app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
   logger.error({ err, url: req.url }, 'Unhandled error in request');
   res.status(500).json({
     error: {
