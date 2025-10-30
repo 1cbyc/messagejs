@@ -11,19 +11,24 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import { withAccelerate } from '@prisma/extension-accelerate';
+
+// Create the extended Prisma client by instantiating it once
+const extendedClient = new PrismaClient().$extends(withAccelerate());
+
+// Type for the extended client
+type ExtendedPrismaClient = typeof extendedClient;
 
 // Declare a global variable to hold the Prisma Client instance.
 // This is a workaround to prevent re-initialization during hot-reloading in development.
 declare global {
   // eslint-disable-next-line no-var
-  var prisma: PrismaClient | undefined;
+  var prisma: ExtendedPrismaClient | undefined;
 }
 
-// Instantiate the Prisma Client.
-// If `globalThis.prisma` already exists (from a previous hot-reload), reuse it.
-// Otherwise, create a new instance.
-// Note: Accelerate extension temporarily removed due to type compatibility issues
-const prisma = globalThis.prisma || new PrismaClient();
+// Instantiate the Prisma Client and apply the Accelerate extension.
+// The client will automatically use the ACCELERATE_URL from the .env file.
+const prisma = globalThis.prisma ?? extendedClient;
 
 // In development, assign the new instance to the global variable.
 if (process.env.NODE_ENV !== 'production') {

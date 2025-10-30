@@ -1,0 +1,167 @@
+openapi: 3.0.3
+info:
+  title: MessageJS API
+  description: The official API for MessageJS, a platform to send messages via multiple chat and messaging services through a unified interface.
+  version: 1.0.0
+servers:
+  - url: https://api.messagejs.pro/api/v1
+    description: Production Server
+
+tags:
+  - name: Messages
+    description: Endpoints for sending and managing messages.
+
+paths:
+  /messages:
+    post:
+      tags:
+        - Messages
+      summary: Send a Message
+      description: |
+        Queues a new message to be sent via a specified connector and template.
+        This is the primary endpoint for the client SDK.
+
+        **Idempotency:** To prevent sending duplicate messages due to network retries, you can include an `Idempotency-Key` header with a unique value (e.g., a UUID). If a request with the same key is received within 24 hours, the server will return the original success response without processing the request a second time.
+      operationId: sendMessage
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          schema:
+            type: string
+            format: uuid
+          description: A unique key to prevent duplicate message creation.
+      requestBody:
+        description: The details of the message to be sent.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageRequest"
+      responses:
+        "202":
+          '200':
+                    description: OK. The request was successful due to idempotency. The original response for this `Idempotency-Key` is returned.
+                    content:
+                      application/json:
+                        schema:
+                          $ref: '#/components/schemas/SendMessageSuccessResponse'
+                  '202':
+                    description: Message Accepted for Processing. The request was successful and the message has been queued for sending.
+                    content:
+                      application/json:
+                        schema:
+                          $ref: '#/components/schemas/SendMessageSuccessResponse'
+        "400":
+          description: Bad Request. The request body is invalid or missing required fields.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized. The API key is missing, invalid, or revoked.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not Found. The specified `connectorId` or `templateId` does not exist or does not belong to your project.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too Many Requests. The API key has exceeded its rate limit.
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: The number of seconds to wait before making a new request.
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+              description: The maximum number of requests you're permitted to make per hour.
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+              description: The number of requests remaining in the current rate limit window.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error. An unexpected error occurred on the server.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    SendMessageRequest:
+      type: object
+      properties:
+        to:
+          type: string
+          description: The recipient's identifier (e.g., an E.164 formatted phone number).
+          example: "+15551234567"
+        connectorId:
+          type: string
+          description: The unique identifier of the connector to use for sending (`conn_...`).
+          example: "conn_a1b2c3d4e5f6"
+        templateId:
+          type: string
+          description: The unique identifier of the template to use (`tpl_...`).
+          example: "tpl_f6e5d4c3b2a1"
+        variables:
+          type: object
+          description: A key-value map of variables to be interpolated into the template.
+          example:
+            name: "Jane Doe"
+            code: "987654"
+      required:
+        - to
+        - connectorId
+        - templateId
+        - variables
+
+    SendMessageSuccessResponse:
+      type: object
+      properties:
+        messageId:
+          type: string
+          description: The unique identifier for the message log entry.
+          example: "msg_g7h8i9j0k1l2"
+        status:
+          type: string
+          description: The initial status of the message.
+          enum: [queued]
+          example: "queued"
+      required:
+        - messageId
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: A machine-readable error code.
+              example: "VALIDATION_ERROR"
+            message:
+              type: string
+              description: A human-readable description of the error.
+              example: "Field 'to' is required."
+      required:
+        - error
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API Key
+      description: API key authentication for SDK requests. Provide your key in the 'Authorization' header as 'Bearer <YOUR_API_KEY>'.

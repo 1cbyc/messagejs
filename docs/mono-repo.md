@@ -22,9 +22,14 @@ messagejs/
 │   │   ├── docusaurus.config.js
 │   │   └── package.json
 │   │
-│   └── examples/          # Example apps & SDK demos
-│       ├── react-demo/
-│       ├── node-demo/
+│   ├── examples/              # Example apps & SDK demos
+│   │   ├── react-demo/
+│   │   ├── node-demo/
+│   │   └── README.md
+│   │
+│   └── shared-types/          # Shared Types
+│       ├── src/
+│       ├── package.json
 │       └── README.md
 │
 ├── .gitignore
@@ -42,3 +47,23 @@ messagejs/
 │   ├── docs/              # Documentation (Docusaurus) NEW
 │   ├── examples/          # Example apps & demos NEW
 │   └── shared-types/      # Shared types
+
+
+<!-- another short brief description -->
+messagejs/
+├── packages/
+│   ├── core/              # Backend API
+│   │   ├── src/
+│   │   │   ├── api/
+│   │   │   │   ├── controllers/   # Request handlers
+│   │   │   │   ├── routes/        # Route definitions
+│   │   │   │   ├── middleware/    # Auth, validation, rate limiting
+│   │   │   │   └── validation/    # Zod schemas
+│   │   │   ├── lib/               # Utilities (logger, Prisma)
+│   │   │   └── queues/            # BullMQ workers
+│   │   └── prisma/                # Database schema
+│   ├── dashboard/         # Frontend UI (Next.js)
+│   ├── client/            # TypeScript SDK
+│   └── shared-types/      # Shared TypeScript types
+├── docker-compose.yml     # PostgreSQL & Redis setup
+└── package.json          # Root package.json (monrepo)
