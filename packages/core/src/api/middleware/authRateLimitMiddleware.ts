@@ -18,13 +18,13 @@ redisClient.on('error', (err) => {
 });
 
 // Rate limiter for authentication endpoints (login/register)
-// Settings: 5 attempts per 15 minutes per IP
+// Settings configurable via environment variables
 const authRateLimiter = new RateLimiterRedis({
   storeClient: redisClient,
   keyPrefix: 'auth_rate_limit',
-  points: 5, // Number of requests
-  duration: 900, // Per 900 seconds (15 minutes)
-  blockDuration: 900, // Block for 15 minutes if limit exceeded
+  points: parseInt(process.env.AUTH_RATE_LIMIT_POINTS ?? '5', 10), // Number of requests
+  duration: parseInt(process.env.AUTH_RATE_LIMIT_DURATION ?? '900', 10), // Per 900 seconds (15 minutes)
+  blockDuration: parseInt(process.env.AUTH_RATE_LIMIT_BLOCK_DURATION ?? '900', 10), // Block for 15 minutes if limit exceeded
 });
 
 /**
