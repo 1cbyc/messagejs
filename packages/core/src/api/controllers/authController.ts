@@ -5,6 +5,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import type { StringValue } from 'ms';
 import prisma from '../../lib/prisma';
 import logger from '../../lib/logger';
 import {
@@ -16,12 +17,12 @@ import {
 
 // --- JWT Configuration ---
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = '7d'; // Token will be valid for 7 days
-
 if (!JWT_SECRET) {
   logger.fatal('FATAL: JWT_SECRET environment variable is not defined.');
   throw new Error('JWT_SECRET must be defined in the environment variables.');
 }
+
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN ?? '7d'; // Token expiration time (default: 7 days)
 
 /**
  * Generates a JSON Web Token for a given user.
@@ -31,7 +32,8 @@ if (!JWT_SECRET) {
  */
 const generateToken = (userId: string, email: string): string => {
   const payload = { userId, email };
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  const options = { expiresIn: JWT_EXPIRES_IN as StringValue | number };
+  return jwt.sign(payload, JWT_SECRET as string, options);
 };
 
 /**

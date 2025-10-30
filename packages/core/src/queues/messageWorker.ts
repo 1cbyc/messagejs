@@ -155,10 +155,10 @@ const messageWorker = new Worker<MessageJobData>(
   processMessageJob,
   {
     connection: redisConnection,
-    concurrency: 5, // Process up to 5 jobs concurrently
+    concurrency: parseInt(process.env.WORKER_CONCURRENCY ?? '5', 10), // Process up to N jobs concurrently
     limiter: {      // Optional: Rate limit jobs to avoid overwhelming third-party APIs
-      max: 10,      // Max 10 jobs
-      duration: 1000, // per 1000 ms (1 second)
+      max: parseInt(process.env.WORKER_RATE_LIMIT_MAX ?? '10', 10),      // Max jobs per duration
+      duration: parseInt(process.env.WORKER_RATE_LIMIT_DURATION ?? '1000', 10), // per duration (ms)
     },
   },
 );
