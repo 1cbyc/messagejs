@@ -81,3 +81,7 @@ ALTER TABLE "MessageLog" ADD CONSTRAINT "MessageLog_projectId_fkey" FOREIGN KEY 
 
 -- AddForeignKey
 ALTER TABLE "MessageLog" ADD CONSTRAINT "MessageLog_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "Service"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Add check constraint to ensure MessageLog serviceId belongs to the specified project
+ALTER TABLE "MessageLog" ADD CONSTRAINT "MessageLog_service_belongs_to_project" 
+CHECK ("projectId" = (SELECT "projectId" FROM "Service" WHERE "Service"."id" = "MessageLog"."serviceId"));
