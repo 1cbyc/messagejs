@@ -4,6 +4,8 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import bcrypt from 'bcrypt';
+import prisma from '../../lib/prisma';
 
 /**
  * @middleware validateApiKey
@@ -48,34 +50,69 @@ export const validateApiKey = async (
     });
   }
 
-  // --- Mock Implementation ---
-  // In a real application, this section would involve:
-  // 1. Hashing the provided `apiKey` if we store hashes.
-  // 2. Querying the `APIKeys` table in the database for a matching key/hash.
-  // 3. Checking if the key is active and belongs to an active project.
-  // 4. Caching the result in Redis for performance.
+  try {
+    // The key from the header should be a concatenation of the public and secret keys.
+    // We expect a format like `<publicKey>_sk_<secretKey>`.
+    const keyParts = apiKey.split('_sk_');
+    if (keyParts.length !== 2) {
+      return res.status(401).json({
+        error: {
+          code: 'AUTH_INVALID_FORMAT',
+          message:
+            "API key is improperly formatted. Expected format: '<publicKey>_sk_<secretKey>'.",
+        },
+      });
+    }
 
-  const MOCK_API_KEY = 'pk_live_a1b2c3d4e5f6g7h8i9j0';
-  const MOCK_PROJECT_ID = 'proj_123456789';
-  const MOCK_API_KEY_ID = 'key_abcdefgh';
+    const [publicKey, secretKey] = keyParts;
 
-  if (apiKey === MOCK_API_KEY) {
-    // Attach the validated API key information to the request object.
-    // This makes it available to downstream controllers.
+    // Find the API key record in the database using the public key.
+    const apiKeyRecord = await prisma.apiKey.findUnique({
+      where: { publicKey },
+    });
+
+    // If no key is found, or if the secret doesn't match, deny access.
+    // We use a general "not valid" message to avoid leaking information
+    // about which part of the key was incorrect.
+    if (!apiKeyRecord) {
+      return res.status(403).json({
+        error: {
+          code: 'AUTH_INVALID_KEY',
+          message: 'The provided API key is not valid.',
+        },
+      });
+    }
+
+    // Compare the provided secret key with the stored hash using bcrypt.
+    const isSecretValid = await bcrypt.compare(
+      secretKey,
+      apiKeyRecord.secretKeyHash,
+    );
+
+    if (!isSecretValid) {
+      return res.status(403).json({
+        error: {
+          code: 'AUTH_INVALID_KEY',
+          message: 'The provided API key is not valid.',
+        },
+      });
+    }
+
+    // Attach the validated API key and project information to the request object.
     req.apiKey = {
-      id: MOCK_API_KEY_ID,
-      projectId: MOCK_PROJECT_ID,
+      id: apiKeyRecord.id,
+      projectId: apiKeyRecord.projectId,
     };
 
     // The key is valid, proceed to the next middleware or controller.
     return next();
+  } catch (error) {
+    console.error('API Key validation error:', error);
+    return res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'An error occurred during API key validation.',
+      },
+    });
   }
-
-  // If the key does not match, it is considered invalid.
-  return res.status(403).json({
-    error: {
-      code: 'AUTH_INVALID_KEY',
-      message: 'The provided API key is not valid.',
-    },
-  });
 };
