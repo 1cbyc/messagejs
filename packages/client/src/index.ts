@@ -166,18 +166,10 @@ class MessageJS {
       } catch (error: any) {
         // Catches network errors and non-retryable errors thrown above.
         lastError = error;
-        // If the error was non-retryable (any 4xx except 429), we exit the loop.
-        // The error message for these starts with "HTTP error!", so this check is correct.
-        // However, to make it more robust, we can add a flag.
-        let isNonRetryable = false;
-        try {
-          const status = parseInt(error.message.match(/Status: (\d+)/)?.[1] || '0', 10);
-          if (status >= 400 && status < 500 && status !== 429) {
-            isNonRetryable = true;
-          }
-        } catch {}
-
-        if (isNonRetryable) {
+        // If the error was thrown by our own logic for non-retryable 4xx status codes,
+        // we should not continue retrying. We can break the loop immediately.
+        // Network errors will not contain "HTTP error!" and will be retried.
+        if (error.message.includes('HTTP error!')) {
           break;
         }
       }

@@ -103,7 +103,8 @@ const processMessageJob = async (job: Job<MessageJobData>) => {
   }
 
   // Step 3: Instantiate the connector using the factory.
-  const connector = ConnectorFactory.create(messageLog.service.type, credentials);
+  const connectorType = fromServiceType(messageLog.service.type);
+  const connector = ConnectorFactory.create(connectorType, credentials);
 
   // Step 4: Render the template with the variables.
   let renderedMessage = template.body;
@@ -112,7 +113,7 @@ const processMessageJob = async (job: Job<MessageJobData>) => {
     const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     renderedMessage = renderedMessage.replace(
       new RegExp(`{{${escapedKey}}}`, 'g'),
-      variables[key],
+      () => variables[key],
     );
   }
 
