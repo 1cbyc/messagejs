@@ -5,7 +5,7 @@
  * This design is based on the specifications in the SYSTEM_DESIGN.md document.
  */
 
-import { ConnectorType, MessageStatus, Template } from './dataModels';
+import { ServiceType, MessageStatus, Template } from '../types/dataModels';
 
 /**
  * Defines the options for sending a message through a connector.
@@ -82,9 +82,9 @@ export interface ConnectorStatus {
  */
 export interface IConnector {
   /**
-   * The type of the connector (e.g., 'whatsapp'). Must match a value from ConnectorType.
+   * The type of the connector (e.g., 'WHATSAPP'). Must match a value from ServiceType.
    */
-  readonly type: ConnectorType;
+  readonly type: ServiceType;
 
   /**
    * A user-friendly name for the connector implementation (e.g., "WhatsApp Cloud API").

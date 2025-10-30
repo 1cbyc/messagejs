@@ -88,10 +88,12 @@ model Service {
 }
 
 model Template {
-  id        String   @id @default(cuid())
-  name      String
-  body      String // The template content, e.g., "Your OTP is {{code}}."
-  createdAt DateTime @default(now())
+  id            String      @id @default(cuid())
+  name          String
+  connectorType ServiceType // The type of connector this template is for
+  body          String      // The template content, e.g., "Your OTP is {{code}}."
+  variables     String?     // JSON string of example/default variables
+  createdAt     DateTime    @default(now())
 
   // Relation: A Template belongs to a single Project.
   projectId String

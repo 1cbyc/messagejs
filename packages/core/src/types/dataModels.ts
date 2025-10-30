@@ -44,6 +44,12 @@ export interface APIKey {
 
 /**
  * A union type representing all supported messaging platforms.
+ * This matches the Prisma ServiceType enum (UPPERCASE values).
+ */
+export type ServiceType = "WHATSAPP" | "TELEGRAM" | "TWILIO_SMS";
+
+/**
+ * @deprecated Use ServiceType instead. This is kept for backward compatibility.
  */
 export type ConnectorType =
   | "whatsapp"
@@ -59,7 +65,7 @@ export type ConnectorType =
 export interface Connector {
   id: string;
   projectId: string; // Foreign key to Project
-  type: ConnectorType;
+  type: ServiceType;
   name: string;
   credentialsEncrypted: string; // AES-256 encrypted credentials
   config: Record<string, any> | null; // Provider-specific settings
@@ -103,6 +109,8 @@ export interface Template {
   id: string;
   projectId: string; // Foreign key to Project
   name: string;
+  connectorType: ServiceType;
   body: string; // The template body, e.g., "Your code is {{otp}}"
+  variables: string | null; // JSON string of example/default variables
   createdAt: Date;
 }
