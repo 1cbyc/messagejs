@@ -1591,7 +1591,7 @@ jobs:
 
 ## Next Steps
 
-- [ ] Complete system design
+- [x] Complete system design
 - [ ] Set up monorepo structure
 - [ ] Implement database schema
 - [ ] Build core API
