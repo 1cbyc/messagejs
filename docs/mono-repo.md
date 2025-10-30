@@ -22,6 +22,13 @@ messagejs/
 │   │   ├── docusaurus.config.js
 │   │   └── package.json
 │   │
+│   ├── website/           # Marketing website (Next.js)
+│   │   ├── src/
+│   │   │   ├── app/       # Next.js app router
+│   │   │   ├── components/
+│   │   │   └── lib/
+│   │   └── package.json
+│   │
 │   ├── examples/              # Example apps & SDK demos
 │   │   ├── react-demo/
 │   │   ├── node-demo/
@@ -45,6 +52,7 @@ messagejs/
 │   ├── client/            # Frontend SDK
 │   ├── dashboard/         # React/Next.js dashboard NEW
 │   ├── docs/              # Documentation (Docusaurus) NEW
+│   ├── website/           # Marketing website (Next.js) NEW
 │   ├── examples/          # Example apps & demos NEW
 │   └── shared-types/      # Shared types
 
@@ -63,6 +71,7 @@ messagejs/
 │   │   │   └── queues/            # BullMQ workers
 │   │   └── prisma/                # Database schema
 │   ├── dashboard/         # Frontend UI (Next.js)
+│   ├── website/           # Marketing website (Next.js)
 │   ├── client/            # TypeScript SDK
 │   └── shared-types/      # Shared TypeScript types
 ├── docker-compose.yml     # PostgreSQL & Redis setup
