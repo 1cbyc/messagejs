@@ -6,6 +6,7 @@
 import { Router } from 'express';
 import { sendMessage } from '../controllers/messageController';
 import { validateApiKey } from '../middleware/authMiddleware';
+import { rateLimitMiddleware } from '../middleware/rateLimitMiddleware';
 import { validate } from '../middleware/validationMiddleware';
 import { sendMessageSchema } from '../validation/messageValidation';
 
@@ -21,6 +22,7 @@ const messageRouter = Router();
 messageRouter.post(
   '/',
   validateApiKey,
+  rateLimitMiddleware,
   validate(sendMessageSchema),
   sendMessage,
 );
