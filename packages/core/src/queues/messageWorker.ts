@@ -14,6 +14,9 @@ import prisma from '../lib/prisma';
 import { ConnectorFactory } from '../connectors/connectorFactory';
 import { decrypt } from '../utils/encryption';
 import logger from '../lib/logger';
+import { fromServiceType } from '../utils/type-mapping';
+import { MessageStatus as PrismaMessageStatus } from '@prisma/client';
+import { MessageStatus as SharedMessageStatus } from '@messagejs/shared-types';
 
 // Load environment variables from .env file.
 dotenv.config();
@@ -22,6 +25,31 @@ dotenv.config();
 const redisConnection = new IORedis(process.env.REDIS_URL!, {
   maxRetriesPerRequest: null,
 });
+
+/**
+ * Maps the lowercase status from the shared-types package to the uppercase
+ * Prisma enum status.
+ * @param status The lowercase status from a connector result.
+ * @returns The corresponding uppercase Prisma enum value.
+ */
+const mapToPrismaStatus = (
+  status: SharedMessageStatus,
+): PrismaMessageStatus => {
+  switch (status) {
+    case 'sent':
+      return 'SENT';
+    case 'delivered':
+      return 'DELIVERED';
+    case 'failed':
+      return 'FAILED';
+    case 'pending':
+      return 'QUEUED';
+    case 'read':
+      return 'DELIVERED';
+    default:
+      return 'FAILED';
+  }
+};
 
 /**
  * The core processing function for a message job.
@@ -37,16 +65,8 @@ const processMessageJob = async (job: Job<MessageJobData>) => {
   const messageLog = await prisma.messageLog.findUnique({
     where: { id: messageLogId },
     include: {
-      service: true, // Include the related service configuration
-      project: {     // Include the related project to get the template
-        include: {
-          templates: {
-            // This is a placeholder; in a real scenario, the templateId would be on the messageLog.
-            // For now, we assume a single template for simplicity.
-            take: 1,
-          },
-        },
-      },
+      service: true,
+      project: true,
     },
   });
 
@@ -58,9 +78,17 @@ const processMessageJob = async (job: Job<MessageJobData>) => {
     throw new Error(`Service configuration not found for MessageLog ID: ${messageLogId}`);
   }
 
-  const template = messageLog.project.templates[0];
+  // Check if templateId is present
+  if (!messageLog.templateId) {
+    throw new Error(`Template ID is missing for MessageLog ID: ${messageLogId}`);
+  }
+
+  // Fetch the template explicitly using templateId from the message log
+  const template = await prisma.template.findFirst({
+    where: { id: messageLog.templateId, projectId: messageLog.projectId },
+  });
   if (!template) {
-    throw new Error(`No template found for project associated with MessageLog ID: ${messageLogId}`);
+    throw new Error(`Template with ID ${messageLog.templateId} not found for project ${messageLog.projectId}`);
   }
 
   // Step 2: Decrypt the service credentials.
@@ -76,28 +104,44 @@ const processMessageJob = async (job: Job<MessageJobData>) => {
   }
 
   // Step 3: Instantiate the connector using the factory.
-  const connector = ConnectorFactory.create(messageLog.service.type, credentials);
+  const connectorType = fromServiceType(messageLog.service.type);
+  const connector = ConnectorFactory.create(connectorType, credentials);
 
-  // Step 4: Send the message via the connector.
-  const result = await connector.sendMessage({
-    to: messageLog.recipient,
-    template: template,
-    variables: {}, // TODO: In a real implementation, variables would be stored on the messageLog.
-  });
+  // Step 4: Render the template with the variables.
+  let renderedMessage = template.body;
+  const variables = (messageLog.variables as Record<string, any>) ?? {};
+  for (const key in variables) {
+    const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    renderedMessage = renderedMessage.replace(
+      new RegExp(`{{${escapedKey}}}`, 'g'),
+      () => variables[key],
+    );
+  }
 
-  // Step 5: Update the message log in the database with the result.
+  // Step 5: Send the message via the connector using the new signature.
+  const result = await connector.sendMessage(
+    messageLog.recipient,
+    renderedMessage,
+  );
+
+  // Step 6: Update the message log in the database with the result.
   await prisma.messageLog.update({
     where: { id: messageLogId },
     data: {
-      status: result.success ? 'SENT' : 'FAILED',
+      status: mapToPrismaStatus(result.status),
       externalMessageId: result.externalId,
       error: result.error,
+      // The `sentAt` timestamp is set only on a successful dispatch.
+      ...(result.success && { sentAt: new Date() }),
     },
   });
 
-  logger.info({ jobId: job.id, result }, `Successfully processed job. Result: ${result.success ? 'Success' : 'Failure'}`);
+  logger.info(
+    { jobId: job.id, result },
+    `Successfully processed job. Result: ${result.status}`,
+  );
 
-  return { externalId: result.externalId, status: result.success ? 'SENT' : 'FAILED' };
+  return { externalId: result.externalId, status: result.status };
 };
 
 // --- Worker Initialization ---
@@ -127,7 +171,11 @@ messageWorker.on('completed', (job, returnValue) => {
 });
 
 messageWorker.on('failed', (job, err) => {
-  logger.error({ jobId: job.id, err }, 'Job failed');
+  if (job) {
+    logger.error({ jobId: job.id, err }, 'Job failed');
+  } else {
+    logger.error({ err }, 'An unknown job failed');
+  }
   // Here, you could add logic to send a notification (e.g., to Sentry).
 });
 

@@ -147,6 +147,5 @@ hide/
 
 /src/generated/prisma
 
-PHASES.md
-
 ui-template/
+docs/PHASES.md

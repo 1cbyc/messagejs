@@ -100,9 +100,11 @@ export const validateApiKey = async (
     }
 
     // Attach the validated API key and project information to the request object.
+    // Attach the validated API key and project information to the request object.
     req.apiKey = {
       id: apiKeyRecord.id,
       projectId: apiKeyRecord.projectId,
+      rateLimit: apiKeyRecord.rateLimit,
     };
 
     // The key is valid, proceed to the next middleware or controller.

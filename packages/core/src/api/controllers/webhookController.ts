@@ -6,6 +6,7 @@ import { Request, Response } from 'express';
 import logger from '../../lib/logger';
 import prisma from '../../lib/prisma';
 import { MessageStatus } from '@prisma/client';
+import { whatsAppWebhookSchema } from '../validation/webhookValidation';
 
 // This should be a secure, randomly generated string that you set in your .env file
 // and also provide in the Meta for Developers dashboard when setting up the webhook.
@@ -79,48 +80,82 @@ const mapWhatsAppStatusToInternalStatus = (
  * @access Public
  */
 export const handleWhatsAppWebhook = async (req: Request, res: Response) => {
-  // WhatsApp webhooks can be complex. We log the entire body for debugging.
-  // In production, you might want to reduce this logging to a 'debug' or 'trace' level.
-  logger.info({ body: req.body }, 'Received WhatsApp webhook');
-
-  // Acknowledge receipt of the webhook immediately to prevent Meta from resending.
+  // Acknowledge receipt immediately to prevent Meta from resending, which is a requirement.
   res.sendStatus(200);
 
+  // 1. Validate the webhook payload shape using our Zod schema.
+  const validationResult = whatsAppWebhookSchema.safeParse(req.body);
+  if (!validationResult.success) {
+    logger.warn(
+      {
+        error: validationResult.error.flatten(),
+        body: req.body,
+      },
+      'Received invalid WhatsApp webhook payload.',
+    );
+    return; // Stop processing if the shape is incorrect.
+  }
+
+  // 2. Process the now-validated payload in a type-safe manner.
   try {
-    const body = req.body;
+    const payload = validationResult.data;
 
-    // Check if the webhook notification is from a page subscription
-    if (body.object === 'whatsapp_business_account') {
-      for (const entry of body.entry) {
-        for (const change of entry.changes) {
-          if (change.field === 'messages' && change.value.statuses) {
-            for (const status of change.value.statuses) {
-              const externalMessageId = status.id; // This is the 'wamid'
-              const newStatusString = status.status;
+    for (const entry of payload.entry) {
+      for (const change of entry.changes) {
+        // We are only interested in changes that contain message statuses.
+        if (change.value.statuses) {
+          for (const statusUpdate of change.value.statuses) {
+            const externalMessageId = statusUpdate.id;
+            const newStatusString = statusUpdate.status;
 
-              // Map the WhatsApp status to our internal enum
-              const newInternalStatus =
-                mapWhatsAppStatusToInternalStatus(newStatusString);
+            const newInternalStatus =
+              mapWhatsAppStatusToInternalStatus(newStatusString);
 
-              if (newInternalStatus && externalMessageId) {
-                logger.info(
-                  { externalMessageId, newStatus: newInternalStatus },
-                  'Updating message status from webhook.',
+            if (!newInternalStatus) {
+              // This is a status we don't handle (e.g., 'read' might be ignored), so we skip it.
+              continue;
+            }
+
+            // Prepare the data for the database update.
+            const updateData: {
+              status: MessageStatus;
+              sentAt?: Date;
+              deliveredAt?: Date;
+            } = {
+              status: newInternalStatus,
+            };
+
+            // Set the appropriate timestamp based on the new status.
+            if (newInternalStatus === 'SENT') {
+              updateData.sentAt = new Date();
+            } else if (newInternalStatus === 'DELIVERED') {
+              updateData.deliveredAt = new Date();
+            }
+
+            logger.info(
+              {
+                externalMessageId,
+                newStatus: newInternalStatus,
+              },
+              'Processing webhook status update.',
+            );
+
+            // Atomically update the message log using the now-unique externalMessageId.
+            // Using a try-catch to gracefully handle cases where the message ID is not found.
+            try {
+              await prisma.messageLog.update({
+                where: { externalMessageId },
+                data: updateData,
+              });
+            } catch (dbError: any) {
+              // Prisma's error code for "Record to update not found".
+              if (dbError.code === 'P2025') {
+                logger.warn(
+                  { externalMessageId },
+                  'Webhook received for an unknown externalMessageId. Ignoring.',
                 );
-
-                // Update the corresponding MessageLog in our database.
-                // We use updateMany because 'externalMessageId' is not a unique field
-                // (though in practice it should be for sent messages).
-                await prisma.messageLog.updateMany({
-                  where: { externalMessageId },
-                  data: {
-                    status: newInternalStatus,
-                    // If the message was delivered, we can record the timestamp.
-                    ...(newInternalStatus === 'DELIVERED' && {
-                      deliveredAt: new Date(),
-                    }),
-                  },
-                });
+              } else {
+                throw dbError; // Re-throw other unexpected database errors.
               }
             }
           }
@@ -128,11 +163,12 @@ export const handleWhatsAppWebhook = async (req: Request, res: Response) => {
       }
     }
   } catch (error: any) {
-    // If our internal processing fails, we log the error.
-    // We've already sent a 200 OK, so Meta won't know about this failure,
-    // which is the desired behavior to keep the webhook active.
+    // This catch block handles errors from our processing logic.
     logger.error(
-      { err: error },
+      {
+        err: error,
+        reqBody: req.body, // Log the original body for easier debugging.
+      },
       'Error processing WhatsApp webhook payload.',
     );
   }

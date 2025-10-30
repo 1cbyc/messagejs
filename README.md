@@ -76,9 +76,9 @@ npm run typecheck
 
 ## Documentation
 
-- [System Design](system_design.txt) - Complete architecture documentation
-- [API Reference](API_REFERENCE.md) - Complete API documentation
-- [Quick Start](QUICK_START.md) - Get started in minutes
+- [System Design](docs/system_design.txt) - Complete architecture documentation
+- [API Reference](docs/API_REFERENCE.md) - Complete API documentation
+- [Quick Start](docs/QUICK_START.md) - Get started in minutes
 
 ---
 

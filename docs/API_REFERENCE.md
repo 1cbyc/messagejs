@@ -103,25 +103,24 @@ Authorization: Bearer <api_key_placeholder>
 ```json
 {
   "to": "+1234567890",
-  "message": "Hello, world!",
-  "connector": "whatsapp",
-  "templateId": "tpl_abc123",
-  "templateVars": {
+  "connectorId": "conn_whatsapp_abc123",
+  "templateId": "tpl_welcome_xyz456",
+  "variables": {
     "name": "John",
     "code": "12345"
   }
 }
 ```
 
-**Response:** `200 OK`
+**Response:** `202 Accepted`
 ```json
 {
-  "success": true,
   "messageId": "msg_xyz789",
-  "status": "sent",
-  "sentAt": "2024-01-15T10:30:00Z"
+  "status": "queued"
 }
 ```
+
+**Note on Idempotency:** To prevent duplicate messages, you can include an `Idempotency-Key: <uuid>` header in your request. If a request with the same key is received, the server will return a `200 OK` response with the original queued message details without creating a duplicate message.
 
 **Error Response:** `400 Bad Request`
 ```json
@@ -848,43 +847,38 @@ browser: <script src="https://cdn.messagejs.pro/v1/messagejs.js"></script>
 ### Initialize
 
 ```typescript
-import messagejs from 'messagejs-client';
+import { messagejs } from '@messagejs/client';
 
-messagejs.init('<api_key_placeholder>', 'proj_xyz789', {
-  endpoint: 'https://api.messagejs.pro', // optional
-  timeout: 10000, // optional, default 10s
-  retries: 1 // optional, default 1
+messagejs.init({
+  apiKey: 'pk_live_your_api_key',
+  // Optional config for self-hosting or retries
+  baseUrl: 'https://api.messagejs.pro/api/v1',
+  retries: 2 // Number of retries on 429/5xx errors, default is 0
 });
 ```
 
 ### Send Message
 
-```typescript
-const result = await messagejs.sendMessage({
-  to: '+1234567890',
-  message: 'Hello, world!',
-  connector: 'whatsapp'
-});
+All messages are sent using a connector and a template.
 
-if (result.success) {
-  console.log('Message sent:', result.messageId);
-} else {
-  console.error('Error:', result.error);
+```typescript
+import { messagejs } from '@messagejs/client';
+
+try {
+  const result = await messagejs.sendMessage({
+    to: '+1234567890',
+    connectorId: 'conn_whatsapp_abc123',
+    templateId: 'tpl_welcome_xyz456',
+    variables: {
+      name: 'John',
+      code: '12345'
+    }
+  });
+
+  console.log('Message queued successfully:', result.messageId, 'Status:', result.status);
+} catch (error) {
+  console.error('Failed to send message:', error);
 }
-```
-
-### Send with Template
-
-```typescript
-const result = await messagejs.sendMessage({
-  to: '+1234567890',
-  templateId: 'tpl_welcome',
-  templateVars: {
-    name: 'John',
-    code: '12345'
-  },
-  connector: 'whatsapp'
-});
 ```
 
 ---
