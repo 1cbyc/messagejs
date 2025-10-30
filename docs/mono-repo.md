@@ -66,5 +66,4 @@ messagejs/
 │   ├── client/            # TypeScript SDK
 │   └── shared-types/      # Shared TypeScript types
 ├── docker-compose.yml     # PostgreSQL & Redis setup
-└── package.json          # Root package.json (monorepo)
-```
+└── package.json          # Root package.json (monrepo)
