@@ -53,7 +53,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
               {icon}
             </span>
           )}
-          <span className={icon ? 'pr-2' : 'px-4'}>{children}</span>
+          {children && <span className={icon ? 'pr-2' : 'px-4'}>{children}</span>}
         </Comp>
         {showBrackets && (
           <div className="opacity-100">

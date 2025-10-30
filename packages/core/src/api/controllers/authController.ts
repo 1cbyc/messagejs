@@ -82,7 +82,17 @@ export const register = async (
       },
       token,
     });
-  } catch (error) {
+  } catch (error: any) {
+    // Check for Prisma's unique constraint violation error
+    if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
+      return res.status(409).json({
+        error: {
+          code: 'USER_EXISTS',
+          message: 'A user with this email address already exists.',
+        },
+      });
+    }
+
     logger.error({ err: error }, 'Error during user registration.');
     return res.status(500).json({
       error: {

@@ -46,19 +46,46 @@ export const sendMessage = async (
         where: { idempotencyKey },
       });
 
-      // If a log exists and it belongs to the current project, return the original response.
-      if (existingLog && existingLog.projectId === projectId) {
+      if (existingLog) {
+        // If the key is already used by another project, it's a conflict.
+        if (existingLog.projectId !== projectId) {
+          logger.warn(
+            {
+              idempotencyKey,
+              existingProjectId: existingLog.projectId,
+              requestProjectId: projectId,
+            },
+            'Idempotency key conflict across projects.',
+          );
+          return res.status(409).json({
+            error: {
+              code: 'IDEMPOTENCY_KEY_CONFLICT',
+              message:
+                'This idempotency key is already in use by another project.',
+            },
+          });
+        }
+
+        // If it's for the same project, this is a valid retry.
+        // Re-queue the job to ensure processing if the worker failed, and return the original success response.
         logger.info(
           {
             idempotencyKey,
             messageId: existingLog.id,
             projectId,
           },
-          'Idempotent request detected. Returning existing message log.',
+          'Idempotent request retry detected. Re-queuing job and returning original response.',
         );
-        return res.status(200).json({
+
+        // Re-queue the job.
+        await messageQueue.add('send-message', {
+          messageLogId: existingLog.id,
+        });
+
+        // Return the original '202 Accepted' to confirm the request is being processed.
+        return res.status(202).json({
           messageId: existingLog.id,
-          status: 'queued', // The original success response status
+          status: 'queued',
         });
       }
     }

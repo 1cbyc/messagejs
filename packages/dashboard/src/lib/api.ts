@@ -18,7 +18,7 @@ import {
 // The base URL for the API. It defaults to the local development server,
 // but can be overridden by an environment variable for production.
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1';
 
 /**
  * A generic and reusable fetch wrapper for the MessageJS API.

@@ -15,7 +15,7 @@ import pinoHttp from 'pino-http';
 /**
  * The environment we're running in (development, production, test)
  */
-const environment = process.env.NODE_ENV || 'development';
+const environment = process.env.NODE_ENV ?? 'development';
 
 /**
  * Determine if we should use pretty printing for logs
@@ -34,7 +34,7 @@ const isDevelopment = environment === 'development';
  * - `redact`: Remove sensitive information from logs
  */
 const logger = pino({
-  level: process.env.LOG_LEVEL || 'info',
+  level: process.env.LOG_LEVEL ?? 'info',
   transport: isDevelopment
     ? {
         target: 'pino-pretty',

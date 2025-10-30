@@ -31,8 +31,9 @@ function LoginForm() {
     try {
       const response = await loginUser({ email, password });
 
-      // In a real production app, you should use http-only cookies for security.
-      // localStorage is used here for simplicity.
+      // TODO: Replace localStorage with http-only cookies for improved security.
+      // The current implementation is vulnerable to XSS attacks. This requires a backend
+      // change to set the cookie upon login.
       if ('token' in response) {
         localStorage.setItem('authToken', response.token);
         router.push('/dashboard');

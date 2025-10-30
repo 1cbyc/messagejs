@@ -25,39 +25,46 @@ paths:
       operationId: sendMessage
       security:
         - ApiKeyAuth: []
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          schema:
+            type: string
+            format: uuid
+          description: A unique key to prevent duplicate message creation.
       requestBody:
         description: The details of the message to be sent.
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SendMessageRequest'
+              $ref: "#/components/schemas/SendMessageRequest"
       responses:
-        '202':
+        "202":
           description: Message Accepted for Processing. The request was successful and the message has been queued for sending.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SendMessageSuccessResponse'
-        '400':
+                $ref: "#/components/schemas/SendMessageSuccessResponse"
+        "400":
           description: Bad Request. The request body is invalid or missing required fields.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
           description: Unauthorized. The API key is missing, invalid, or revoked.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
           description: Not Found. The specified `connectorId` or `templateId` does not exist or does not belong to your project.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '429':
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
           description: Too Many Requests. The API key has exceeded its rate limit.
           headers:
             Retry-After:
@@ -75,13 +82,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
           description: Internal Server Error. An unexpected error occurred on the server.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
   schemas:
