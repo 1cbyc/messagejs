@@ -14,6 +14,7 @@ import prisma from '../lib/prisma';
 import { ConnectorFactory } from '../connectors/connectorFactory';
 import { decrypt } from '../utils/encryption';
 import logger from '../lib/logger';
+import { fromServiceType } from '../utils/type-mapping';
 import { MessageStatus as PrismaMessageStatus } from '@prisma/client';
 import { MessageStatus as SharedMessageStatus } from '@messagejs/shared-types';
 
