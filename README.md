@@ -46,7 +46,7 @@ This is a monorepo containing:
 
 ```bash
 # Clone the repository
-git clone https://github.com/messagejs/messagejs.git
+git clone https://github.com/1cbyc/messagejs.git
 cd messagejs
 
 # Install dependencies
