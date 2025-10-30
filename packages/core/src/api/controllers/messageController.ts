@@ -37,17 +37,9 @@ export const sendMessage = async (
       });
     }
 
-    // Step 2: Extract and validate the request body.
-    // TODO: Add robust validation with a library like Zod.
+    // Step 2: Extract the validated request body.
+    // The Zod validation middleware has already ensured the body is well-formed.
     const { serviceId, templateId, recipient } = req.body;
-    if (!serviceId || !templateId || !recipient) {
-      return res.status(400).json({
-        error: {
-          code: 'INVALID_INPUT',
-          message: 'Missing required fields: serviceId, templateId, recipient.',
-        },
-      });
-    }
 
     // Step 3: Fetch the service and template from the database in parallel.
     // We also ensure they belong to the correct project for authorization.

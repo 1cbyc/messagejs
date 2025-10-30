@@ -103,8 +103,6 @@ export interface Template {
   id: string;
   projectId: string; // Foreign key to Project
   name: string;
-  connectorType: ConnectorType;
-  content: string; // The template body, e.g., "Your code is {{otp}}"
-  variables: Record<string, any> | null; // Example/default variables
+  body: string; // The template body, e.g., "Your code is {{otp}}"
   createdAt: Date;
 }
