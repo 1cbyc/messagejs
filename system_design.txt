@@ -1591,15 +1591,15 @@ jobs:
 
 ## Next Steps
 
-1. Complete system design
-2. Set up monorepo structure
-3. Implement database schema
-4. Build core API
-5. Create first connector (WhatsApp)
-6. Build client SDK
-7. Create dashboard UI
-8. Write documentation
-9. Add tests and CI/CD
+- [ ] Complete system design
+- [ ] Set up monorepo structure
+- [ ] Implement database schema
+- [ ] Build core API
+- [ ] Create first connector (WhatsApp)
+- [ ] Build client SDK
+- [ ] Create dashboard UI
+- [ ] Write documentation
+- [ ] Add tests and CI/CD
 
 ---
 
