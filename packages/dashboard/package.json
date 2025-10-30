@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "vercel-build": "cd ../.. && npm run build --workspace=@messagejs/shared-types && cd packages/dashboard && next build"
   },
   "dependencies": {
     "@messagejs/shared-types": "*",
