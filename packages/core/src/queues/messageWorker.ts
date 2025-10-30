@@ -13,6 +13,7 @@ import { MESSAGE_QUEUE_NAME, MessageJobData } from './messageQueue';
 import prisma from '../lib/prisma';
 import { ConnectorFactory } from '../connectors/connectorFactory';
 import { decrypt } from '../utils/encryption';
+import logger from '../lib/logger';
 
 // Load environment variables from .env file.
 dotenv.config();
@@ -30,7 +31,7 @@ const redisConnection = new IORedis(process.env.REDIS_URL!, {
  */
 const processMessageJob = async (job: Job<MessageJobData>) => {
   const { messageLogId } = job.data;
-  console.log(`[Worker] Processing job ${job.id} for MessageLog ID: ${messageLogId}`);
+  logger.info({ jobId: job.id, messageLogId }, 'Processing message job');
 
   // Step 1: Fetch all necessary data from the database.
   const messageLog = await prisma.messageLog.findUnique({
@@ -70,7 +71,7 @@ const processMessageJob = async (job: Job<MessageJobData>) => {
   } catch (error: any) {
     // If decryption or parsing fails, the job cannot proceed.
     // Throwing an error will cause BullMQ to retry the job according to our backoff strategy.
-    console.error(`[Worker] Critical error processing job ${job.id}: Failed to decrypt or parse credentials.`, error);
+    logger.error({ jobId: job.id, messageLogId, err: error }, 'Critical error: Failed to decrypt or parse credentials.');
     throw new Error(`Failed to decrypt credentials for MessageLog ID: ${messageLogId}. Reason: ${error.message}`);
   }
 
@@ -94,7 +95,7 @@ const processMessageJob = async (job: Job<MessageJobData>) => {
     },
   });
 
-  console.log(`[Worker] Successfully processed job ${job.id}. Result: ${result.success ? 'Success' : 'Failure'}`);
+  logger.info({ jobId: job.id, result }, `Successfully processed job. Result: ${result.success ? 'Success' : 'Failure'}`);
 
   return { externalId: result.externalId, status: result.success ? 'SENT' : 'FAILED' };
 };
@@ -122,41 +123,41 @@ const messageWorker = new Worker<MessageJobData>(
 // These are crucial for logging and monitoring the health of the worker.
 
 messageWorker.on('completed', (job, returnValue) => {
-  console.log(`[Worker] Job ${job.id} completed successfully. Return value:`, returnValue);
+  logger.info({ jobId: job.id, returnValue }, 'Job completed successfully');
 });
 
 messageWorker.on('failed', (job, err) => {
-  console.error(`[Worker] Job ${job.id} failed with error: ${err.message}`);
+  logger.error({ jobId: job.id, err }, 'Job failed');
   // Here, you could add logic to send a notification (e.g., to Sentry).
 });
 
 messageWorker.on('error', err => {
-  console.error(`[Worker] A BullMQ worker error occurred: ${err.message}`);
+  logger.error({ err }, 'A BullMQ worker error occurred');
 });
 
-console.log('🚀 Message worker is running and listening for jobs...');
+logger.info('🚀 Message worker is running and listening for jobs...');
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
-  console.log('SIGTERM signal received: closing message worker...');
+  logger.info('SIGTERM signal received: closing message worker...');
 
   try {
     // Close the BullMQ worker
     await messageWorker.close();
-    console.log('Message worker closed.');
+    logger.info('Message worker closed.');
 
     // Disconnect Prisma client
     await prisma.$disconnect();
-    console.log('Prisma client disconnected.');
+    logger.info('Prisma client disconnected.');
 
     // Close Redis connection
     await redisConnection.quit();
-    console.log('Redis connection closed.');
+    logger.info('Redis connection closed.');
 
     // Exit the process
     process.exit(0);
   } catch (error) {
-    console.error('Error during graceful shutdown:', error);
+    logger.error({ err: error }, 'Error during graceful shutdown');
     process.exit(1);
   }
 });

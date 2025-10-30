@@ -9,6 +9,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { RateLimiterRedis } from 'rate-limiter-flexible';
 import IORedis from 'ioredis';
+import logger from '../../lib/logger';
 
 // --- Rate Limiter Configuration ---
 
@@ -18,7 +19,7 @@ const redisClient = new IORedis(process.env.REDIS_URL!, {
 });
 
 redisClient.on('error', (err) => {
-  console.error('[RateLimiter] Redis connection error:', err);
+  logger.error({ err }, '[RateLimiter] Redis connection error');
 });
 
 // Configure the rate limiter options.
@@ -49,7 +50,10 @@ export const rateLimitMiddleware = async (
 
   if (!apiKeyId) {
     // This should not happen if the auth middleware runs first, but as a safeguard:
-    console.error('[RateLimiter] Error: API key ID not found on request object.');
+    logger.error(
+      { reqId: req.id },
+      '[RateLimiter] Error: API key ID not found on request object.',
+    );
     return res.status(500).json({
       error: {
         code: 'INTERNAL_SERVER_ERROR',

@@ -10,6 +10,7 @@
 import { Queue } from 'bullmq';
 import IORedis from 'ioredis';
 import dotenv from 'dotenv';
+import logger from '../lib/logger';
 
 // Load environment variables from .env file to ensure REDIS_URL is available.
 dotenv.config();
@@ -66,5 +67,5 @@ export const messageQueue = new Queue<MessageJobData>(MESSAGE_QUEUE_NAME, {
 
 // A simple event listener to log any connection errors with the queue itself.
 messageQueue.on('error', (err) => {
-  console.error(`[MessageQueue] BullMQ Queue Error: ${err.message}`);
+  logger.error({ error: err }, 'BullMQ Queue Error');
 });
