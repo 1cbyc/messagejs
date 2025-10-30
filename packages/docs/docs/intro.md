@@ -1,6 +1,5 @@
 ---
 id: intro
-slug: /
 title: Welcome to MessageJS
 sidebar_position: 1
 ---
