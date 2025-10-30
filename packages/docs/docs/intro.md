@@ -1,3 +1,9 @@
+---
+id: intro
+title: Welcome to MessageJS
+sidebar_position: 1
+---
+
 # Welcome to MessageJS
 
 MessageJS enables web developers to send messages via multiple chat platforms (WhatsApp, Telegram, SMS, etc.) through a simple SDK, without exposing credentials.

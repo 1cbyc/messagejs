@@ -1,5 +1,9 @@
 module.exports = {
   tutorialSidebar: [
-    'intro',
+    {
+      type: 'doc',
+      id: 'intro',
+      label: 'Introduction',
+    },
   ],
 };
