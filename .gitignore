@@ -144,3 +144,5 @@ vite.config.ts.timestamp-*
 hide/
 
 .DS_Store
+
+/src/generated/prisma

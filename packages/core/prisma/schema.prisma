@@ -1,0 +1,105 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// --- 1. Configuration ---
+
+// Specifies the data source provider (PostgreSQL) and the connection URL.
+// The URL is loaded from an environment variable for security.
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Specifies that Prisma should generate a TypeScript client.
+generator client {
+  provider = "prisma-client-js"
+}
+
+// --- 2. Enums ---
+// Defines a set of allowed values for specific model fields,
+// enforcing data integrity at the database level.
+
+enum ServiceType {
+  WHATSAPP
+  TELEGRAM
+  TWILIO_SMS
+}
+
+enum MessageStatus {
+  QUEUED     // The message has been accepted by the API but not yet sent.
+  SENT       // The message has been successfully sent to the third-party provider.
+  DELIVERED  // Confirmation of delivery has been received (if supported).
+  FAILED     // The message failed to send from our system or was rejected by the provider.
+  UNDELIVERED // The provider confirmed the message could not be delivered to the recipient.
+}
+
+// --- 3. Data Models ---
+// These models are the blueprint for our database tables.
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+
+  // Relation: A User can have multiple Projects.
+  projects     Project[]
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  name      String
+  apiKey    String   @unique
+  createdAt DateTime @default(now())
+
+  // Relation: A Project belongs to a single User.
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Relation: A Project can have multiple Services, Templates, and MessageLogs.
+  services    Service[]
+  templates   Template[]
+  messageLogs MessageLog[]
+}
+
+model Service {
+  id          String      @id @default(cuid())
+  type        ServiceType
+  credentials String // This will store the AES-256 encrypted credentials blob.
+  createdAt   DateTime    @default(now())
+
+  // Relation: A Service belongs to a single Project.
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Relation: A Service can be used for many MessageLogs.
+  messageLogs MessageLog[]
+}
+
+model Template {
+  id        String   @id @default(cuid())
+  name      String
+  body      String // The template content, e.g., "Your OTP is {{code}}."
+  createdAt DateTime @default(now())
+
+  // Relation: A Template belongs to a single Project.
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model MessageLog {
+  id                String        @id @default(cuid())
+  status            MessageStatus @default(QUEUED)
+  recipient         String
+  externalMessageId String? // The unique ID from the third-party provider (e.g., Twilio SID).
+  error             String?       // Stores the error message if the status is FAILED.
+  timestamp         DateTime      @default(now())
+
+  // Relation: A MessageLog belongs to a single Project.
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Relation: A MessageLog is sent via a single Service.
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
