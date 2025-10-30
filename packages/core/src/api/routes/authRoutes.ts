@@ -7,6 +7,7 @@ import { Router } from 'express';
 import { register, login } from '../controllers/authController';
 import { validate } from '../middleware/validationMiddleware';
 import { registerSchema, loginSchema } from '../validation/authValidation';
+import { authRateLimitMiddleware } from '../middleware/authRateLimitMiddleware';
 
 // Create a new Express router instance.
 const authRouter = Router();
@@ -16,13 +17,13 @@ const authRouter = Router();
  * @desc    Handles new user registration. The request body is validated against the registerSchema.
  * @access  Public
  */
-authRouter.post('/register', validate(registerSchema), register);
+authRouter.post('/register', authRateLimitMiddleware, validate(registerSchema), register);
 
 /**
  * @route   POST /login
  * @desc    Handles user login. The request body is validated against the loginSchema.
  * @access  Public
  */
-authRouter.post('/login', validate(loginSchema), login);
+authRouter.post('/login', authRateLimitMiddleware, validate(loginSchema), login);
 
 export default authRouter;

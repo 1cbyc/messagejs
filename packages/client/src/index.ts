@@ -102,7 +102,7 @@ class MessageJS {
         // Ensure the base URL doesn't have a trailing slash
         this.baseUrl = config.baseUrl.replace(/\/$/, '');
       }
-      if (config.retries) {
+      if (config.retries !== undefined) {
         this.retries = Math.max(0, config.retries);
       }
     }
@@ -166,8 +166,18 @@ class MessageJS {
       } catch (error: any) {
         // Catches network errors and non-retryable errors thrown above.
         lastError = error;
-        // If the error was non-retryable, we exit the loop immediately.
-        if (error.message.startsWith('HTTP error!')) {
+        // If the error was non-retryable (any 4xx except 429), we exit the loop.
+        // The error message for these starts with "HTTP error!", so this check is correct.
+        // However, to make it more robust, we can add a flag.
+        let isNonRetryable = false;
+        try {
+          const status = parseInt(error.message.match(/Status: (\d+)/)?.[1] || '0', 10);
+          if (status >= 400 && status < 500 && status !== 429) {
+            isNonRetryable = true;
+          }
+        } catch {}
+
+        if (isNonRetryable) {
           break;
         }
       }

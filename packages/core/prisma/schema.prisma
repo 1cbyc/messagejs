@@ -128,9 +128,8 @@ model MessageLog {
   service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   // Relation: The message was rendered from a Template.
-  templateId String
-  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  templateId String?
+  template   Template? @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
-  @@index([externalMessageId])
   @@index([projectId, serviceId])
 }

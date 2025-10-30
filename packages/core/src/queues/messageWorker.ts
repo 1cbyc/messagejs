@@ -102,7 +102,7 @@ const processMessageJob = async (job: Job<MessageJobData>) => {
 
   // Step 4: Render the template with the variables.
   let renderedMessage = template.body;
-  const variables = (messageLog.variables as Record<string, any>) || {};
+  const variables = (messageLog.variables as Record<string, any>) ?? {};
   for (const key in variables) {
     const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     renderedMessage = renderedMessage.replace(

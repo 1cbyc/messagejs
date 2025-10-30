@@ -21,9 +21,12 @@ const app = express();
 
 // The port the application will listen on.
 // It will use the PORT from the .env file, or default to 3001.
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT ?? 3001;
 
 // --- Global Middleware ---
+
+// Trust proxy for accurate IP address detection (important for rate limiting)
+app.set('trust proxy', true);
 
 // Enable parsing of JSON request bodies.
 // This is essential for our REST API to accept JSON payloads.
