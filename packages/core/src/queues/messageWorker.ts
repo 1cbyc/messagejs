@@ -11,6 +11,7 @@ import IORedis from 'ioredis';
 import dotenv from 'dotenv';
 import { MESSAGE_QUEUE_NAME, MessageJobData } from './messageQueue';
 import prisma from '../lib/prisma';
+import { ConnectorFactory } from '../connectors/connectorFactory';
 
 // Load environment variables from .env file.
 dotenv.config();
@@ -55,37 +56,44 @@ const processMessageJob = async (job: Job<MessageJobData>) => {
     throw new Error(`Service configuration not found for MessageLog ID: ${messageLogId}`);
   }
 
-  console.log(`[Worker] Found service: ${messageLog.service.type}`);
+  const template = messageLog.project.templates[0];
+  if (!template) {
+    throw new Error(`No template found for project associated with MessageLog ID: ${messageLogId}`);
+  }
 
-  // Step 2: (Future Implementation) Decrypt credentials.
-  console.log('[Worker] TODO: Decrypt service credentials...');
-  // const credentials = decrypt(messageLog.service.credentials);
+  // Step 2: "Decrypt" credentials. For now, we parse the JSON string.
+  // TODO: Replace this with actual AES-256 decryption logic.
+  let credentials;
+  try {
+    // Assuming credentials are a JSON string like: '{"accessToken": "...", "phoneNumberId": "..."}'
+    credentials = JSON.parse(messageLog.service.credentials);
+  } catch (error) {
+    throw new Error('Failed to parse credentials. Ensure they are stored as a valid JSON string.');
+  }
 
-  // Step 3: (Future Implementation) Instantiate the connector.
-  console.log('[Worker] TODO: Instantiate connector using a factory...');
-  // const connector = ConnectorFactory.create(messageLog.service.type, credentials);
+  // Step 3: Instantiate the connector using the factory.
+  const connector = ConnectorFactory.create(messageLog.service.type, credentials);
 
-  // Step 4: (Future Implementation) Send the message.
-  console.log('[Worker] TODO: Sending message to', messageLog.recipient);
-  // const result = await connector.sendMessage({ ... });
-
-  // --- Mock Success ---
-  // For now, we'll simulate a successful send after a short delay.
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  const mockExternalId = `mock_ext_${Date.now()}`;
+  // Step 4: Send the message via the connector.
+  const result = await connector.sendMessage({
+    to: messageLog.recipient,
+    template: template,
+    variables: {}, // TODO: In a real implementation, variables would be stored on the messageLog.
+  });
 
   // Step 5: Update the message log in the database with the result.
   await prisma.messageLog.update({
     where: { id: messageLogId },
     data: {
-      status: 'SENT',
-      externalMessageId: mockExternalId,
+      status: result.success ? 'SENT' : 'FAILED',
+      externalMessageId: result.externalId,
+      error: result.error,
     },
   });
 
-  console.log(`[Worker] Successfully processed job ${job.id}. Message status updated to SENT.`);
+  console.log(`[Worker] Successfully processed job ${job.id}. Result: ${result.success ? 'Success' : 'Failure'}`);
 
-  return { externalId: mockExternalId, status: 'SENT' };
+  return { externalId: result.externalId, status: result.success ? 'SENT' : 'FAILED' };
 };
 
 // --- Worker Initialization ---
@@ -128,6 +136,24 @@ console.log('🚀 Message worker is running and listening for jobs...');
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('SIGTERM signal received: closing message worker...');
-  await messageWorker.close();
-  console.log('Message worker closed.');
+  
+  try {
+    // Close the BullMQ worker
+    await messageWorker.close();
+    console.log('Message worker closed.');
+    
+    // Disconnect Prisma client
+    await prisma.$disconnect();
+    console.log('Prisma client disconnected.');
+    
+    // Close Redis connection
+    await redisConnection.quit();
+    console.log('Redis connection closed.');
+    
+    // Exit the process
+    process.exit(0);
+  } catch (error) {
+    console.error('Error during graceful shutdown:', error);
+    process.exit(1);
+  }
 });
