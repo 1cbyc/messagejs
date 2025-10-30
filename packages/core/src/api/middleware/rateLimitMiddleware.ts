@@ -68,23 +68,34 @@ export const rateLimitMiddleware = async (
 
     // If consumption is successful, the request is within limits. Proceed.
     return next();
-  } catch (rateLimiterRes) {
-    // If an error is caught, it means the rate limit has been exceeded.
-    // The error object contains details about when the limit will reset.
+  } catch (rateLimiterRes: any) {
+    // Check if this is a rate limit error (has remainingPoints property)
+    if (rateLimiterRes.remainingPoints !== undefined) {
+      // This is a valid rate limit error - the user exceeded the limit
+      const seconds_until_reset = Math.ceil(rateLimiterRes.msBeforeNext / 1000);
 
-    const seconds_until_reset = Math.ceil(rateLimiterRes.msBeforeNext / 1000);
+      // Set standard rate limiting headers on the response.
+      res.setHeader('Retry-After', seconds_until_reset);
+      res.setHeader('X-RateLimit-Limit', limiter.points);
+      res.setHeader('X-RateLimit-Remaining', rateLimiterRes.remainingPoints);
+      res.setHeader('X-RateLimit-Reset', new Date(Date.now() + rateLimiterRes.msBeforeNext).toISOString());
 
-    // Set standard rate limiting headers on the response.
-    res.setHeader('Retry-After', seconds_until_reset);
-    res.setHeader('X-RateLimit-Limit', limiter.points);
-    res.setHeader('X-RateLimit-Remaining', rateLimiterRes.remainingPoints);
-    res.setHeader('X-RateLimit-Reset', new Date(Date.now() + rateLimiterRes.msBeforeNext).toISOString());
+      return res.status(429).json({
+        error: {
+          code: 'RATE_LIMIT_EXCEEDED',
+          message: `Too many requests. Please try again in ${seconds_until_reset} second(s).`,
+        },
+      });
+    }
 
-    return res.status(429).json({
-      error: {
-        code: 'RATE_LIMIT_EXCEEDED',
-        message: `Too many requests. Please try again in ${seconds_until_reset} second(s).`,
-      },
-    });
+    // This is likely a Redis connection error or other unexpected error
+    // Log it and allow the request to proceed (fail open) to prevent cascading failures
+    logger.error(
+      { error: rateLimiterRes, apiKeyId },
+      'Rate limiter error - allowing request to proceed (fail open)',
+    );
+
+    // Allow the request to proceed rather than blocking all traffic
+    return next();
   }
 };
