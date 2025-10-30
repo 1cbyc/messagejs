@@ -8,7 +8,8 @@ import {
   SendMessageSuccessResponse,
   ApiErrorResponse,
 } from '../../types/apiTypes';
-import crypto from 'crypto';
+import prisma from '../../lib/prisma';
+import { messageQueue } from '../../queues/messageQueue';
 
 /**
  * @controller sendMessage
@@ -27,50 +28,87 @@ export const sendMessage = async (
   res: Response<SendMessageSuccessResponse | ApiErrorResponse>,
 ): Promise<Response> => {
   try {
-    // TODO: Step 1: Implement robust input validation (e.g., using Zod) to check the request body.
-    const { connectorId, to, templateId, variables } = req.body;
+    // Step 1: Extract project details from the validated API key (attached by middleware).
+    const projectId = req.apiKey?.projectId;
+    if (!projectId) {
+      // This should technically be caught by the middleware, but it's good practice to double-check.
+      return res.status(401).json({
+        error: { code: 'AUTH_ERROR', message: 'Invalid API key details.' },
+      });
+    }
 
-    // The real implementation will follow the flow from SYSTEM_DESIGN.md:
-    // TODO: Step 2: The API Key middleware (to be created) will have already validated the key
-    //       and attached apiKey data to `req.apiKey`.
-    //
-    // TODO: Step 3: Fetch the Connector and Template entities from the database.
-    //
-    // TODO: Step 4: Verify that both entities belong to the `projectId` from `req.apiKey`.
-    //
-    // TODO: Step 5: Decrypt the connector's credentials securely in memory.
-    //
-    // TODO: Step 6: Use a ConnectorFactory to instantiate the correct connector (e.g., WhatsAppConnector).
-    //
-    // TODO: Step 7: Create a new Message log entry in the database with a 'queued' status.
-    //
-    // TODO: Step 8: (For async processing) Push a job to a queue like BullMQ with all necessary data.
-    //       The job worker would then perform the actual sending.
-    //
-    // TODO: Step 9: For now, we will simulate the direct sending flow.
-    //       await connector.sendMessage({ to, template, variables });
+    // Step 2: Extract and validate the request body.
+    // TODO: Add robust validation with a library like Zod.
+    const { serviceId, templateId, recipient } = req.body;
+    if (!serviceId || !templateId || !recipient) {
+      return res.status(400).json({
+        error: {
+          code: 'INVALID_INPUT',
+          message: 'Missing required fields: serviceId, templateId, recipient.',
+        },
+      });
+    }
 
-    // --- Mock Implementation ---
-    // For the MVP, we will simulate a successful queuing of the message.
-    const mockMessageId = `msg_${crypto.randomUUID()}`;
+    // Step 3: Fetch the service and template from the database in parallel.
+    // We also ensure they belong to the correct project for authorization.
+    const [service, template] = await Promise.all([
+      prisma.service.findFirst({
+        where: { id: serviceId, projectId: projectId },
+      }),
+      prisma.template.findFirst({
+        where: { id: templateId, projectId: projectId },
+      }),
+    ]);
 
-    // As per the design document, a successful request should return a 202 Accepted status
-    // to indicate that the message has been accepted for processing, but not yet sent.
+    // Step 4: Verify that both the service and template exist and are linked to the project.
+    if (!service) {
+      return res.status(404).json({
+        error: {
+          code: 'NOT_FOUND',
+          message: `Service with ID '${serviceId}' not found or does not belong to your project.`,
+        },
+      });
+    }
+
+    if (!template) {
+      return res.status(404).json({
+        error: {
+          code: 'NOT_FOUND',
+          message: `Template with ID '${templateId}' not found or does not belong to your project.`,
+        },
+      });
+    }
+
+    // Step 5: Create a new message log entry with a 'QUEUED' status.
+    const messageLog = await prisma.messageLog.create({
+      data: {
+        projectId: projectId,
+        serviceId: serviceId,
+        recipient: recipient,
+        status: 'QUEUED', // Using the enum from our Prisma schema
+        // TODO: In a real implementation, we would store the rendered template + variables
+      },
+    });
+
+    // Step 6: Push a job to our BullMQ queue for background processing.
+    // We only need to pass the ID, as the worker will fetch the full details.
+    await messageQueue.add('send-message', {
+      messageLogId: messageLog.id,
+    });
+
+    // Step 7: Return a 202 Accepted response, confirming the message is queued.
     return res.status(202).json({
-      messageId: mockMessageId,
+      messageId: messageLog.id,
       status: 'queued',
       externalId: null,
-      details: 'Message has been accepted for processing.',
+      details: 'Message has been successfully queued for processing.',
     });
   } catch (error: any) {
-    // In a real application, this would be logged to a proper logging service (e.g., Sentry, Pino).
     console.error('Failed to process message:', error);
-
     return res.status(500).json({
       error: {
-        code: 'INTERNAL_ERROR',
-        message:
-          'An unexpected error occurred on the server while processing the message.',
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred while processing your message.',
       },
     });
   }

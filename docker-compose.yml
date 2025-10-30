@@ -9,7 +9,7 @@
 # 3. The PostgreSQL database will be available on localhost:5432.
 # 4. To stop the services, run `docker-compose down`.
 
-version: '3.8'
+version: "3.8"
 
 services:
   # Defines the PostgreSQL database service.
@@ -39,7 +39,19 @@ services:
     # Restart policy: ensures the container will restart automatically if it stops.
     restart: always
 
+  # Defines the Redis service for caching and job queues.
+  redis:
+    image: redis:7-alpine
+    container_name: messagejs_redis_dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+
 # Defines the named volume used by the postgres service for data persistence.
 volumes:
   postgres_data:
+    driver: local
+  redis_data:
     driver: local
