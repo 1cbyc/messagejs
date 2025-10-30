@@ -1,0 +1,1609 @@
+# MessageJS System Design
+
+## 1. Introduction & Core Concepts
+
+### 1.1. Goal
+
+MessageJS is a developer-centric platform designed to abstract the complexity of sending messages through various chat and messaging services (like WhatsApp, Telegram, SMS). It provides a unified API and a client-side SDK, allowing developers to integrate messaging capabilities into their web applications without managing server-side code or exposing sensitive credentials on the frontend.MessageJS enables web developers to send messages via WhatsApp, Telegram, SMS, and other chat platforms through a simple SDK, without exposing credentials.
+
+### 1.2. Core Problem Solved
+
+Web developers often need to send transactional messages (e.g., OTPs, notifications, order confirmations) from their applications. Integrating directly with services like the WhatsApp Cloud API or Twilio requires handling authentication, managing API keys securely, and writing backend logic. MessageJS acts as a secure proxy, providing a simple, EmailJS-like experience for chat platforms.
+
+### 1.3. Key Principles
+
+*   **Simplicity:** The client-side SDK should be intuitive, with a minimal API surface (`init`, `send`).
+*   **Security:** Frontend applications should never handle raw credentials. All communication is secured via per-project API keys.
+*   **Modularity:** The backend must support new messaging providers through a pluggable "connector" architecture.
+*   **Performance:** The client-side SDK must be lightweight (<20KB gzipped) to avoid impacting web application performance.
+
+### 1.4. Core Value Proposition
+- **Simple SDK**: Similar to EmailJS API (`init()` + `send()`)
+- **Secure**: Credentials never exposed to frontend
+- **Unified Interface**: Single API for multiple messaging platforms
+- **Developer-Friendly**: Minimal setup, clear documentation
+
+### 1.5. User Types
+1. **End Users** (Developers): Use SDK in their applications
+2. **Dashboard Users**: Manage projects, API keys, templates via web UI
+3. **Platform Admins**: Monitor system health, manage connectors
+
+
+## 2. System Architecture
+
+The system is composed of several key components that work together to deliver the core functionality.
+
+**[Client App w/ messagejs-client] -> [messagejs-core API] -> [Third-Party Messaging API]**
+
+
+### High-Level Architecture
+
+```
+┌─────────────────┐
+│  Web Apps       │
+│  (React, Vue)   │
+└────────┬────────┘
+         │ HTTPS
+         │ SDK Calls
+┌────────▼──────────────────────────────┐
+│         MessageJS Client SDK          │
+│  - init(apiKey, projectId)            │
+│  - sendMessage(to, message, connector)│
+└────────┬──────────────────────────────┘
+         │ REST API
+         │ POST /api/v1/messages
+┌────────▼──────────────────────────────┐
+│         Core Backend API              │
+│  ┌────────────────────────────────┐  │
+│  │  Express.js Server             │  │
+│  │  - Auth Middleware             │  │
+│  │  - Rate Limiting               │  │
+│  │  - Request Validation          │  │
+│  └───────────┬────────────────────┘  │
+│              │                        │
+│  ┌───────────▼────────────────────┐  │
+│  │  Service Layer                 │  │
+│  │  - MessageService              │  │
+│  │  - ProjectService              │  │
+│  │  - UserService                 │  │
+│  │  - AnalyticsService            │  │
+│  └───────────┬────────────────────┘  │
+│              │                        │
+│  ┌───────────▼────────────────────┐  │
+│  │  Connector Router              │  │
+│  │  - WhatsAppConnector           │  │
+│  │  - TelegramConnector           │  │
+│  │  - TwilioConnector             │  │
+│  │  - SMTPConnector               │  │
+│  └───────────┬────────────────────┘  │
+└──────────────┼─────────────────────────┘
+               │
+      ┌────────▼──────────┐
+      │   Database        │
+      │   (PostgreSQL)    │
+      │   - Users         │
+      │   - Projects      │
+      │   - API Keys      │
+      │   - Messages      │
+      │   - Templates     │
+      └────────┬──────────┘
+               │
+      ┌────────▼──────────┐
+      │  Redis Cache      │
+      │  - Rate Limiting  │
+      │  - Session Store  │
+      │  - Queue Worker   │
+      └───────────────────┘
+
+┌─────────────────────────────────────────┐
+│         External APIs                   │
+│  ┌──────────┐  ┌──────────┐            │
+│  │ WhatsApp │  │ Telegram │            │
+│  │ Cloud API│  │ Bot API  │            │
+│  └──────────┘  └──────────┘            │
+│  ┌──────────┐  ┌──────────┐            │
+│  │  Twilio  │  │   SMTP   │            │
+│  │   SMS    │  │  Servers │            │
+│  └──────────┘  └──────────┘            │
+└─────────────────────────────────────────┘
+```
+
+### 2.1. Components
+
+1.  **`messagejs-client` (TypeScript SDK):** A lightweight library installed in a developer's frontend application. It exposes simple functions to send messages. It is responsible for making a secure, authenticated request to the `messagejs-core` API.
+2.  **`messagejs-core` (Node.js/Express Backend):** The central nervous system. It receives requests from the SDK, validates the API key, fetches the corresponding project and service credentials, loads the appropriate connector, and dispatches the message to the third-party API.
+3.  **`messagejs-dashboard` (React Web App):** A user-facing application for developers to sign up, create projects, generate API keys, manage message templates, and view logs and analytics.
+4.  **Connectors (Internal Modules):** Pluggable modules within `messagejs-core`, each dedicated to a specific messaging service (e.g., `whatsapp.js`, `telegram.js`). They conform to a standard interface.
+5.  **Database (MongoDB/PostgreSQL):** Persists all user data, projects, encrypted credentials, message logs, and other application state.
+
+### 2.2. Architecture Diagrams (Mermaid Syntax)
+
+#### High-Level System Architecture
+
+This diagram shows the main components and their interactions within the MessageJS ecosystem.
+
+```mermaid
+graph TD
+    subgraph "User's Browser"
+        A[Developer's Web App] -- "integrates" --> B(messagejs-client SDK)
+    end
+
+    subgraph "MessageJS Platform"
+        C(messagejs-core API)
+        D(messagejs-dashboard)
+        E[Database (MongoDB/Postgres)]
+    end
+
+    subgraph "Third-Party Services"
+        F[WhatsApp Cloud API]
+        G[Telegram Bot API]
+        H[Twilio SMS API]
+    end
+
+    Dev[Developer] -- "Manages Project" --> D
+
+    B -- "POST /api/v1/send\n(apiKey)" --> C
+    D -- "Manages (CRUD)" --> E
+    C -- "Reads config, Writes logs" --> E
+    C -- "Proxies request via Connectors" --> F
+    C -- "Proxies request via Connectors" --> G
+    C -- "Proxies request via Connectors" --> H
+```
+
+#### Message Sending Sequence Diagram
+
+This diagram details the step-by-step data flow when a message is sent from a client application.
+
+```mermaid
+sequenceDiagram
+    participant WebApp as Developer's Web App
+    participant SDK as messagejs-client
+    participant CoreAPI as messagejs-core
+    participant DB as Database
+    participant ThirdParty as Third-Party API (e.g., WhatsApp)
+
+    WebApp->>+SDK: messagejs.send({ ...options })
+    SDK->>+CoreAPI: POST /api/v1/send (apiKey in header)
+    CoreAPI->>CoreAPI: 1. Auth Middleware: Validate API Key
+    CoreAPI->>+DB: 2. Fetch Project & Service Config (incl. encrypted credentials)
+    DB-->>-CoreAPI: Return config
+    CoreAPI->>CoreAPI: 3. Decrypt credentials in memory
+    CoreAPI->>CoreAPI: 4. Load appropriate Connector
+    CoreAPI->>+ThirdParty: 5. connector.sendMessage()
+    ThirdParty-->>-CoreAPI: 6. API Response (success/fail)
+    CoreAPI->>+DB: 7. Log transaction result
+    DB-->>-CoreAPI: Log saved
+    CoreAPI-->>-SDK: 8. Return { success: true/false }
+    SDK-->>-WebApp: Promise resolves with response
+```
+
+## 3. Component Deep Dive
+
+### 3.1. `messagejs-core` (Backend API)
+
+*   **Framework:** Node.js with Express.
+*   **Language:** TypeScript.
+*   **Architecture:** Modular, with a clear separation of concerns:
+    *   `routes/`: Defines API endpoints and links to controllers.
+    *   `controllers/`: Handles request/response logic.
+    *   `services/`: Encapsulates business logic (e.g., `ProjectService`, `AuthService`, `ConnectorService`).
+    *   `connectors/`: Contains platform-specific logic for sending messages.
+    *   `middleware/`: For authentication, rate limiting, logging, and error handling.
+    *   `models/`: Defines database schemas/models.
+
+#### Key API Endpoints (RESTful)
+
+*   **Public (for SDK):**
+    *   `POST /api/v1/send`: The primary endpoint for sending messages.
+*   **Private (for Dashboard):**
+    *   `POST /api/v1/auth/register`: User registration.
+    *   `POST /api/v1/auth/login`: User login (returns JWT).
+    *   `GET /api/v1/projects`: List user's projects.
+    *   `POST /api/v1/projects`: Create a new project.
+    *   `GET /api/v1/projects/:id`: Get project details (including API keys).
+    *   `PUT /api/v1/projects/:id`: Update a project.
+    *   `POST /api/v1/projects/:id/services`: Add a new service configuration (e.g., add WhatsApp credentials).
+    *   `GET /api/v1/projects/:id/logs`: Get message logs for a project.
+
+#### Connector Interface
+
+All connectors must implement a standard interface:
+
+```typescript
+interface IConnector {
+  sendMessage(credentials: any, to: string, template: string, params: object): Promise<ConnectorResponse>;
+}
+
+interface ConnectorResponse {
+  success: boolean;
+  messageId?: string;
+  error?: string;
+}
+```
+
+### 3.2. `messagejs-client` (SDK)
+
+*   **Language:** TypeScript.
+*   **Bundler:** Rollup (to ensure small bundle size and tree-shaking).
+*   **Output:** UMD, ESM modules for broad compatibility.
+
+#### Public API
+
+```typescript
+//
+// Initialize the SDK with the public API Key for a project.
+//
+function init(publicKey: string): void;
+
+//
+// Send a message using a specific service and template configured in the dashboard.
+//
+interface SendOptions {
+  serviceId: string;
+  templateId: string;
+  templateParams: Record<string, any>;
+  recipient: string; // e.g., phone number, user ID
+}
+
+function send(options: SendOptions): Promise<any>;
+```
+
+### 3.3. `messagejs-dashboard` (Web UI)
+
+*   **Framework:** React (Next.js is a good option for its routing and server-side capabilities).
+*   **Styling:** A component library like Material-UI or Chakra UI.
+*   **State Management:** React Context or a library like Zustand for managing global state (e.g., user authentication).
+
+#### Key Features
+
+1.  **Authentication:** User registration and login pages.
+2.  **Project Management:** A dashboard to view, create, and edit projects.
+3.  **API Key Management:** Generate, view, and revoke public API keys for each project.
+4.  **Service Configuration:** A secure form to add, edit, and manage credentials for services like WhatsApp, Telegram, etc.
+5.  **Template Editor:** A simple UI to create and manage message templates.
+6.  **Logs Explorer:** A table to view the history of sent messages, their status, and any errors.
+
+## 4. Database Schema
+
+Below is a conceptual schema, which can be implemented in MongoDB (collections) or PostgreSQL (tables).
+
+*   **`Users`**
+    *   `_id`: ObjectId
+    *   `email`: String (unique)
+    *   `passwordHash`: String
+    *   `createdAt`: Date
+
+*   **`Projects`**
+    *   `_id`: ObjectId
+    *   `userId`: ObjectId (ref: Users)
+    *   `name`: String
+    *   `apiKey`: String (unique, public)
+    *   `createdAt`: Date
+
+*   **`Services`**
+    *   `_id`: ObjectId
+    *   `projectId`: ObjectId (ref: Projects)
+    *   `type`: String (e.g., 'whatsapp', 'telegram')
+    *   `credentials`: String (encrypted JSON blob)
+    *   `createdAt`: Date
+
+*   **`Templates`**
+    *   `_id`: ObjectId
+    *   `projectId`: ObjectId (ref: Projects)
+    *   `name`: String
+    *   `body`: String (e.g., "Your OTP is {{otp_code}}")
+    *   `createdAt`: Date
+
+*   **`MessageLogs`**
+    *   `_id`: ObjectId
+    *   `projectId`: ObjectId (ref: Projects)
+    *   `serviceId`: ObjectId (ref: Services)
+    *   `status`: String ('success', 'failed')
+    *   `recipient`: String
+    *   `externalMessageId`: String (from third-party API)
+    *   `error`: String (if failed)
+    *   `timestamp`: Date
+
+
+## Data Models
+
+### Database Schema (PostgreSQL)
+
+#### Users Table
+```sql
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  name VARCHAR(255),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  last_login TIMESTAMP,
+  is_active BOOLEAN DEFAULT true
+);
+
+CREATE INDEX idx_users_email ON users(email);
+```
+
+#### Projects Table
+```sql
+CREATE TABLE projects (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  is_active BOOLEAN DEFAULT true
+);
+
+CREATE INDEX idx_projects_user_id ON projects(user_id);
+```
+
+#### API Keys Table
+```sql
+CREATE TABLE api_keys (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  key_hash VARCHAR(255) NOT NULL,
+  name VARCHAR(255),
+  last_used TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW(),
+  expires_at TIMESTAMP,
+  rate_limit INTEGER DEFAULT 1000, -- messages per hour
+  is_active BOOLEAN DEFAULT true
+);
+
+CREATE INDEX idx_api_keys_project_id ON api_keys(project_id);
+CREATE INDEX idx_api_keys_key_hash ON api_keys(key_hash);
+```
+
+#### Connectors Table
+```sql
+CREATE TABLE connectors (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  type VARCHAR(50) NOT NULL, -- 'whatsapp', 'telegram', 'twilio', etc.
+  name VARCHAR(255) NOT NULL,
+  credentials_encrypted TEXT NOT NULL, -- Encrypted JSON
+  config JSONB, -- Additional configuration
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_connectors_project_id ON connectors(project_id);
+CREATE INDEX idx_connectors_type ON connectors(type);
+```
+
+#### Messages Table
+```sql
+CREATE TABLE messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  api_key_id UUID REFERENCES api_keys(id),
+  connector_id UUID REFERENCES connectors(id),
+  status VARCHAR(50) NOT NULL, -- 'pending', 'sent', 'failed', 'delivered'
+  to_number VARCHAR(50) NOT NULL,
+  message_text TEXT NOT NULL,
+  metadata JSONB, -- Platform-specific data
+  error_message TEXT,
+  sent_at TIMESTAMP,
+  delivered_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_messages_project_id ON messages(project_id);
+CREATE INDEX idx_messages_status ON messages(status);
+CREATE INDEX idx_messages_created_at ON messages(created_at);
+```
+
+#### Templates Table
+```sql
+CREATE TABLE templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  connector_type VARCHAR(50) NOT NULL,
+  content TEXT NOT NULL,
+  variables JSONB, -- Template variables
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_templates_project_id ON templates(project_id);
+```
+
+#### Rate Limits Table (Redis Cache)
+```typescript
+interface RateLimitRecord {
+  key: string; // apiKey:connector
+  count: number;
+  windowStart: number; // timestamp
+}
+```
+
+### TypeScript Interfaces
+
+```typescript
+// packages/shared-types/src/index.ts
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  createdAt: Date;
+}
+
+export interface Project {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  createdAt: Date;
+}
+
+export interface APIKey {
+  id: string;
+  projectId: string;
+  name: string;
+  lastUsed?: Date;
+  expiresAt?: Date;
+  rateLimit: number;
+  isActive: boolean;
+}
+
+export interface Connector {
+  id: string;
+  projectId: string;
+  type: ConnectorType;
+  name: string;
+  credentials: Record<string, any>;
+  config?: Record<string, any>;
+  isActive: boolean;
+}
+
+export type ConnectorType = 
+  | 'whatsapp'
+  | 'telegram'
+  | 'twilio'
+  | 'smtp'
+  | 'slack'
+  | 'discord';
+
+export interface Message {
+  id: string;
+  projectId: string;
+  connectorId?: string;
+  status: MessageStatus;
+  to: string;
+  text: string;
+  metadata?: Record<string, any>;
+  error?: string;
+  sentAt?: Date;
+  deliveredAt?: Date;
+  createdAt: Date;
+}
+
+export type MessageStatus = 
+  | 'pending'
+  | 'sent'
+  | 'delivered'
+  | 'failed'
+  | 'read';
+
+export interface Template {
+  id: string;
+  projectId: string;
+  name: string;
+  connectorType: ConnectorType;
+  content: string;
+  variables: string[];
+  isActive: boolean;
+}
+
+export interface SendMessageParams {
+  to: string;
+  message: string;
+  connector?: ConnectorType;
+  templateId?: string;
+  templateVars?: Record<string, string>;
+}
+
+export interface SendMessageResult {
+  success: boolean;
+  messageId?: string;
+  status: MessageStatus;
+  error?: string;
+}
+```
+
+
+## 5. Security Design
+
+*   **Credential Encryption:** Service credentials in the `Services` table/collection **must** be encrypted at rest using a strong symmetric encryption algorithm (e.g., AES-256). The encryption key should be managed securely via environment variables or a secret management service. Decryption should only happen in memory when a message is being sent.
+*   **Authentication:**
+    *   **Dashboard:** JWT-based session management for users.
+    *   **API:** API Key authentication for requests from the `messagejs-client` SDK.
+*   **Authorization:** The API must ensure that users can only access projects and resources they own. API keys must be tied to a single project.
+*   **Rate Limiting:** Implement rate limiting on the `/api/v1/send` endpoint, scoped per API key, to prevent abuse.
+*   **CORS:** Configure strict CORS policies on the `messagejs-core` API to only allow requests from authorized domains (configurable per project in the dashboard).
+*   **Input Validation:** All API inputs must be rigorously validated to prevent injection attacks.
+
+
+## 6. API Design
+
+
+## API Design
+
+### REST API Endpoints
+
+#### Authentication Endpoints
+
+```
+POST   /api/v1/auth/register
+POST   /api/v1/auth/login
+POST   /api/v1/auth/logout
+GET    /api/v1/auth/me
+POST   /api/v1/auth/refresh
+```
+
+#### Project Endpoints
+
+```
+GET    /api/v1/projects
+POST   /api/v1/projects
+GET    /api/v1/projects/:id
+PUT    /api/v1/projects/:id
+DELETE /api/v1/projects/:id
+```
+
+#### API Key Endpoints
+
+```
+GET    /api/v1/projects/:projectId/keys
+POST   /api/v1/projects/:projectId/keys
+DELETE /api/v1/projects/:projectId/keys/:keyId
+```
+
+#### Connector Endpoints
+
+```
+GET    /api/v1/projects/:projectId/connectors
+POST   /api/v1/projects/:projectId/connectors
+GET    /api/v1/projects/:projectId/connectors/:id
+PUT    /api/v1/projects/:projectId/connectors/:id
+DELETE /api/v1/projects/:projectId/connectors/:id
+POST   /api/v1/projects/:projectId/connectors/:id/test
+```
+
+#### Message Endpoints
+
+```
+POST   /api/v1/messages         # Send message (via SDK)
+GET    /api/v1/messages         # List messages (dashboard)
+GET    /api/v1/messages/:id     # Get message details
+```
+
+#### Template Endpoints
+
+```
+GET    /api/v1/projects/:projectId/templates
+POST   /api/v1/projects/:projectId/templates
+GET    /api/v1/projects/:projectId/templates/:id
+PUT    /api/v1/projects/:projectId/templates/:id
+DELETE /api/v1/projects/:projectId/templates/:id
+```
+
+#### Analytics Endpoints
+
+```
+GET    /api/v1/analytics/messages
+GET    /api/v1/analytics/usage
+GET    /api/v1/analytics/connectors
+```
+
+### Request/Response Examples
+
+#### Send Message (SDK Call)
+
+**Request:**
+```http
+POST /api/v1/messages HTTP/1.1
+Host: api.messagejs.pro
+Content-Type: application/json
+Authorization: Bearer sk_live_abc123...
+
+{
+  "to": "+1234567890",
+  "message": "Hello, world!",
+  "connector": "whatsapp"
+}
+```
+
+**Response:**
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "success": true,
+  "messageId": "msg_xyz789",
+  "status": "sent",
+  "sentAt": "2024-01-15T10:30:00Z"
+}
+```
+
+#### Create Connector (Dashboard)
+
+**Request:**
+```http
+POST /api/v1/projects/proj_123/connectors HTTP/1.1
+Authorization: Bearer jwt_token...
+
+{
+  "type": "whatsapp",
+  "name": "Business WhatsApp",
+  "credentials": {
+    "phoneNumberId": "123456789",
+    "accessToken": "EAAG..."
+  }
+}
+```
+
+**Response:**
+```http
+HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "id": "conn_456",
+  "projectId": "proj_123",
+  "type": "whatsapp",
+  "name": "Business WhatsApp",
+  "isActive": true,
+  "createdAt": "2024-01-15T10:30:00Z"
+}
+```
+
+---
+
+## Connector System
+
+### Connector Interface
+
+All connectors implement a uniform interface:
+
+```typescript
+// packages/core/src/connectors/base.ts
+
+export interface IConnector {
+  type: ConnectorType;
+  name: string;
+  
+  /**
+   * Validate connector credentials
+   */
+  validate(): Promise<boolean>;
+  
+  /**
+   * Send a message
+   */
+  sendMessage(
+    to: string,
+    message: string,
+    options?: SendOptions
+  ): Promise<SendResult>;
+  
+  /**
+   * Get connector status
+   */
+  getStatus(): Promise<ConnectorStatus>;
+}
+
+export interface SendOptions {
+  metadata?: Record<string, any>;
+  templateId?: string;
+  templateVars?: Record<string, string>;
+}
+
+export interface SendResult {
+  success: boolean;
+  messageId?: string;
+  status: MessageStatus;
+  error?: string;
+}
+
+export interface ConnectorStatus {
+  connected: boolean;
+  message?: string;
+}
+```
+
+### Connector Implementations
+
+#### WhatsApp Connector
+```typescript
+// packages/core/src/connectors/whatsapp.ts
+
+export class WhatsAppConnector implements IConnector {
+  type = 'whatsapp' as const;
+  name: string;
+  
+  private phoneNumberId: string;
+  private accessToken: string;
+  private apiVersion = 'v18.0';
+  private baseUrl = 'https://graph.facebook.com';
+  
+  constructor(config: WhatsAppConfig) {
+    this.name = config.name;
+    this.phoneNumberId = config.phoneNumberId;
+    this.accessToken = config.accessToken;
+  }
+  
+  async validate(): Promise<boolean> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/${this.apiVersion}/${this.phoneNumberId}`,
+        {
+          headers: { Authorization: `Bearer ${this.accessToken}` }
+        }
+      );
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+  
+  async sendMessage(
+    to: string,
+    message: string,
+    options?: SendOptions
+  ): Promise<SendResult> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/${this.apiVersion}/${this.phoneNumberId}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            to,
+            text: { body: message }
+          })
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        return {
+          success: true,
+          messageId: data.messages[0].id,
+          status: 'sent'
+        };
+      }
+      
+      return {
+        success: false,
+        status: 'failed',
+        error: data.error?.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+  
+  async getStatus(): Promise<ConnectorStatus> {
+    const valid = await this.validate();
+    return {
+      connected: valid,
+      message: valid ? 'Connected' : 'Invalid credentials'
+    };
+  }
+}
+```
+
+#### Telegram Connector
+```typescript
+// packages/core/src/connectors/telegram.ts
+
+export class TelegramConnector implements IConnector {
+  type = 'telegram' as const;
+  name: string;
+  
+  private botToken: string;
+  private baseUrl = 'https://api.telegram.org/bot';
+  
+  constructor(config: TelegramConfig) {
+    this.name = config.name;
+    this.botToken = config.botToken;
+  }
+  
+  async validate(): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.baseUrl}${this.botToken}/getMe`);
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+  
+  async sendMessage(
+    to: string,
+    message: string,
+    options?: SendOptions
+  ): Promise<SendResult> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}${this.botToken}/sendMessage`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: to,
+            text: message
+          })
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (response.ok && data.ok) {
+        return {
+          success: true,
+          messageId: String(data.result.message_id),
+          status: 'sent'
+        };
+      }
+      
+      return {
+        success: false,
+        status: 'failed',
+        error: data.description
+      };
+    } catch (error) {
+      return {
+        success: false,
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+  
+  async getStatus(): Promise<ConnectorStatus> {
+    const valid = await this.validate();
+    return {
+      connected: valid,
+      message: valid ? 'Connected' : 'Invalid bot token'
+    };
+  }
+}
+```
+
+#### Twilio Connector
+```typescript
+// packages/core/src/connectors/twilio.ts
+
+import twilio from 'twilio';
+
+export class TwilioConnector implements IConnector {
+  type = 'twilio' as const;
+  name: string;
+  
+  private client: twilio.Twilio;
+  private fromNumber: string;
+  
+  constructor(config: TwilioConfig) {
+    this.name = config.name;
+    this.fromNumber = config.fromNumber;
+    this.client = twilio(config.accountSid, config.authToken);
+  }
+  
+  async validate(): Promise<boolean> {
+    try {
+      await this.client.api.accounts(this.client.accountSid).fetch();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  
+  async sendMessage(
+    to: string,
+    message: string,
+    options?: SendOptions
+  ): Promise<SendResult> {
+    try {
+      const result = await this.client.messages.create({
+        body: message,
+        to,
+        from: this.fromNumber
+      });
+      
+      return {
+        success: true,
+        messageId: result.sid,
+        status: 'sent'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+  
+  async getStatus(): Promise<ConnectorStatus> {
+    const valid = await this.validate();
+    return {
+      connected: valid,
+      message: valid ? 'Connected' : 'Invalid credentials'
+    };
+  }
+}
+```
+
+### Connector Factory
+
+```typescript
+// packages/core/src/connectors/factory.ts
+
+export class ConnectorFactory {
+  static create(config: ConnectorConfig): IConnector {
+    switch (config.type) {
+      case 'whatsapp':
+        return new WhatsAppConnector(config as WhatsAppConfig);
+      
+      case 'telegram':
+        return new TelegramConnector(config as TelegramConfig);
+      
+      case 'twilio':
+        return new TwilioConnector(config as TwilioConfig);
+      
+      default:
+        throw new Error(`Unsupported connector type: ${config.type}`);
+    }
+  }
+  
+  static async fromDb(connectorId: string): Promise<IConnector> {
+    // Load connector from database
+    const connectorData = await db.query(
+      'SELECT * FROM connectors WHERE id = $1',
+      [connectorId]
+    );
+    
+    if (!connectorData.rows[0]) {
+      throw new Error('Connector not found');
+    }
+    
+    // Decrypt credentials
+    const credentials = decrypt(connectorData.rows[0].credentials_encrypted);
+    
+    // Create connector instance
+    return this.create({
+      ...connectorData.rows[0],
+      credentials
+    });
+  }
+}
+```
+
+---
+
+## Authentication & Authorization
+
+### Authentication Flow
+
+#### 1. User Registration
+```typescript
+// POST /api/v1/auth/register
+{
+  email: string;
+  password: string;
+  name: string;
+}
+
+// Response
+{
+  user: User;
+  token: string; // JWT
+}
+```
+
+#### 2. User Login
+```typescript
+// POST /api/v1/auth/login
+{
+  email: string;
+  password: string;
+}
+
+// Response
+{
+  user: User;
+  token: string;
+  refreshToken: string;
+}
+```
+
+#### 3. JWT Structure
+```typescript
+interface JWTPayload {
+  userId: string;
+  email: string;
+  iat: number;
+  exp: number;
+}
+```
+
+### API Key Authentication
+
+#### Key Generation
+```typescript
+// When creating API key
+const apiKey = `sk_live_${generateSecureRandom(32)}`;
+const keyHash = await bcrypt.hash(apiKey, 10);
+
+// Store hash in database
+await db.insert('api_keys', {
+  key_hash: keyHash,
+  project_id: projectId,
+  rate_limit: 1000
+});
+
+// Return plain key once to user
+return apiKey;
+```
+
+#### Key Validation Middleware
+```typescript
+// packages/core/src/middleware/auth.ts
+
+export async function validateApiKey(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Missing API key' });
+  }
+  
+  const apiKey = authHeader.substring(7);
+  
+  // Find API key in database
+  const apiKeyData = await db.query(
+    'SELECT * FROM api_keys WHERE is_active = true'
+  );
+  
+  // Compare hash
+  for (const key of apiKeyData.rows) {
+    const isValid = await bcrypt.compare(apiKey, key.key_hash);
+    
+    if (isValid) {
+      req.apiKey = key;
+      req.projectId = key.project_id;
+      return next();
+    }
+  }
+  
+  return res.status(401).json({ error: 'Invalid API key' });
+}
+```
+
+### Authorization Middleware
+
+```typescript
+// Check if user owns the resource
+export async function authorizeProject(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const projectId = req.params.projectId || req.body.projectId;
+  const userId = req.user.id;
+  
+  const project = await db.query(
+    'SELECT * FROM projects WHERE id = $1 AND user_id = $2',
+    [projectId, userId]
+  );
+  
+  if (!project.rows[0]) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+  
+  req.project = project.rows[0];
+  next();
+}
+```
+
+---
+
+## SDK Design
+
+### Public API
+
+```typescript
+// packages/client/src/index.ts
+
+export interface Config {
+  endpoint?: string;
+  timeout?: number;
+  retries?: number;
+}
+
+export interface SendParams {
+  to: string;
+  message: string;
+  connector?: ConnectorType;
+  templateId?: string;
+  templateVars?: Record<string, string>;
+}
+
+export interface SendResult {
+  success: boolean;
+  messageId?: string;
+  status: MessageStatus;
+  error?: string;
+}
+
+class MessageJS {
+  private apiKey?: string;
+  private projectId?: string;
+  private config: Config;
+  
+  constructor() {
+    this.config = {
+      endpoint: 'https://api.messagejs.pro',
+      timeout: 10000,
+      retries: 1
+    };
+  }
+  
+  /**
+   * Initialize the SDK
+   */
+  init(apiKey: string, projectId: string, config?: Partial<Config>): void {
+    this.apiKey = apiKey;
+    this.projectId = projectId;
+    this.config = { ...this.config, ...config };
+  }
+  
+  /**
+   * Send a message
+   */
+  async sendMessage(params: SendParams): Promise<SendResult> {
+    if (!this.apiKey || !this.projectId) {
+      throw new Error('SDK not initialized. Call init() first.');
+    }
+    
+    try {
+      const response = await fetch(`${this.config.endpoint}/api/v1/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`
+        },
+        body: JSON.stringify({
+          ...params,
+          projectId: this.projectId
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send message');
+      }
+      
+      return {
+        success: true,
+        messageId: data.messageId,
+        status: data.status
+      };
+    } catch (error) {
+      return {
+        success: false,
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+}
+
+// Singleton instance
+const messagejs = new MessageJS();
+
+export default messagejs;
+export { messagejs };
+```
+
+### Usage Examples
+
+#### Vanilla JavaScript
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdn.messagejs.pro/v1/messagejs.js"></script>
+</head>
+<body>
+  <script>
+    // Initialize
+    messagejs.init('sk_live_abc123...', 'proj_xyz789');
+    
+    // Send message
+    messagejs.sendMessage({
+      to: '+1234567890',
+      message: 'Hello from MessageJS!',
+      connector: 'whatsapp'
+    }).then(result => {
+      console.log('Message sent:', result);
+    });
+  </script>
+</body>
+</html>
+```
+
+#### TypeScript/React
+```typescript
+import messagejs from 'messagejs-client';
+
+// Initialize in app entry
+messagejs.init(
+  process.env.REACT_APP_MESSAGEJS_API_KEY!,
+  process.env.REACT_APP_MESSAGEJS_PROJECT_ID!
+);
+
+// Use in component
+function ContactForm() {
+  const handleSend = async () => {
+    const result = await messagejs.sendMessage({
+      to: '+1234567890',
+      message: 'New contact form submission',
+      connector: 'telegram'
+    });
+    
+    if (result.success) {
+      alert('Message sent!');
+    }
+  };
+  
+  return <button onClick={handleSend}>Send</button>;
+}
+```
+
+#### Node.js
+```typescript
+import messagejs from 'messagejs-client';
+
+messagejs.init('sk_live_abc123...', 'proj_xyz789');
+
+async function sendWelcomeMessage(phoneNumber: string) {
+  const result = await messagejs.sendMessage({
+    to: phoneNumber,
+    message: 'Welcome to our service!',
+    connector: 'whatsapp'
+  });
+  
+  console.log(result);
+}
+```
+
+
+### Security Measures
+
+#### 1. API Key Security
+- Keys are hashed with bcrypt before storage
+- Keys are never returned after initial creation
+- Keys can be rotated/revoked via dashboard
+- Rate limiting per API key
+
+#### 2. Credential Encryption
+- Connector credentials encrypted at rest using AES-256
+- Encryption key stored in environment variable
+- Credentials decrypted only when used
+
+```typescript
+// packages/core/src/utils/encryption.ts
+
+import crypto from 'crypto';
+
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY!;
+const ALGORITHM = 'aes-256-gcm';
+
+export function encrypt(text: string): string {
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv(ALGORITHM, 
+    Buffer.from(ENCRYPTION_KEY, 'hex'), iv);
+  
+  let encrypted = cipher.update(text, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  
+  const authTag = cipher.getAuthTag();
+  
+  return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
+}
+
+export function decrypt(encryptedText: string): string {
+  const [ivHex, authTagHex, encrypted] = encryptedText.split(':');
+  
+  const decipher = crypto.createDecipheriv(ALGORITHM,
+    Buffer.from(ENCRYPTION_KEY, 'hex'),
+    Buffer.from(ivHex, 'hex'));
+  
+  decipher.setAuthTag(Buffer.from(authTagHex, 'hex'));
+  
+  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  
+  return decrypted;
+}
+```
+
+#### 3. Rate Limiting
+- Sliding window algorithm using Redis
+- Default: 1000 messages/hour per API key
+- Configurable per key
+
+```typescript
+// packages/core/src/middleware/rateLimit.ts
+
+import redis from 'redis';
+
+const client = redis.createClient({ url: process.env.REDIS_URL });
+
+export async function rateLimit(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const apiKeyId = req.apiKey.id;
+  const key = `rate_limit:${apiKeyId}`;
+  const limit = req.apiKey.rate_limit;
+  
+  const current = await client.get(key);
+  
+  if (current && parseInt(current) >= limit) {
+    return res.status(429).json({
+      error: 'Rate limit exceeded',
+      retryAfter: 3600 // seconds
+    });
+  }
+  
+  await client.incr(key);
+  await client.expire(key, 3600); // 1 hour window
+  
+  next();
+}
+```
+
+#### 4. Input Validation
+- All inputs validated with Zod schemas
+- Sanitize user input to prevent injection
+- Type safety with TypeScript
+
+```typescript
+// packages/core/src/validation/messages.ts
+
+import { z } from 'zod';
+
+export const SendMessageSchema = z.object({
+  to: z.string().regex(/^\+?[1-9]\d{1,14}$/), // E.164 format
+  message: z.string().min(1).max(4096),
+  connector: z.enum(['whatsapp', 'telegram', 'twilio']).optional(),
+  projectId: z.string().uuid()
+});
+```
+
+#### 5. CORS Configuration
+```typescript
+// packages/core/src/app.ts
+
+import cors from 'cors';
+
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
+```
+
+
+## Deployment
+
+### Environment Variables
+
+```bash
+# Database
+DATABASE_URL=postgresql://user:pass@localhost:5432/messagejs
+REDIS_URL=redis://localhost:6379
+
+# JWT
+JWT_SECRET=your-secret-key
+JWT_EXPIRES_IN=7d
+REFRESH_TOKEN_SECRET=your-refresh-secret
+
+# Encryption
+ENCRYPTION_KEY=your-32-byte-hex-key
+
+# API
+API_BASE_URL=https://api.messagejs.pro
+PORT=3000
+
+# CORS
+ALLOWED_ORIGINS=https://app.messagejs.pro,https://example.com
+
+# External APIs
+WHATSAPP_API_URL=https://graph.facebook.com
+TELEGRAM_API_URL=https://api.telegram.org/bot
+
+# Monitoring
+SENTRY_DSN=your-sentry-dsn
+LOG_LEVEL=info
+```
+
+### Docker Setup
+
+```dockerfile
+# packages/core/Dockerfile
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --production
+
+COPY . .
+
+RUN npm run build
+
+EXPOSE 3000
+
+CMD ["node", "dist/index.js"]
+```
+
+```yaml
+# docker-compose.yml
+
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: messagejs
+      POSTGRES_USER: messagejs
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+  
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+  
+  api:
+    build: ./packages/core
+    environment:
+      DATABASE_URL: postgresql://messagejs:password@postgres:5432/messagejs
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  postgres_data:
+  redis_data:
+```
+
+### CI/CD Pipeline
+
+```yaml
+# .github/workflows/deploy.yml
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm ci
+      - run: npm test
+  
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Deploy to production
+        run: |
+          # Deploy steps
+```
+
+---
+
+## Scalability & Performance
+
+### Performance Optimizations
+
+1. **Database Indexing**: All foreign keys and frequently queried fields indexed
+2. **Redis Caching**: Frequently accessed data cached (1-5 minute TTL)
+3. **Connection Pooling**: PostgreSQL connection pool (max 20 connections)
+4. **Message Queue**: Use Bull or similar for async message processing
+5. **CDN**: Serve SDK from CDN for global distribution
+
+### Horizontal Scaling
+
+```
+┌───────────────┐
+│ Load Balancer │
+└──────┬────────┘
+       │
+   ┌───┴───────┬──────────┬──────────┐
+   │           │          │          │
+┌──▼──┐     ┌──▼──┐   ┌───▼─┐    ┌───▼─┐
+│ API │     │ API │   │ API │    │ API │
+└──┬──┘     └──┬──┘   └───┬─┘    └───┬─┘
+   │           │          │          │
+   └───┬───────┴──────────┴───┬──────┘
+       │                      │
+┌──────▼──────┐        ┌──────▼──────┐
+│  PostgreSQL │        │    Redis    │
+│   (Primary) │        │   Cluster   │
+└─────────────┘        └─────────────┘
+```
+
+### Monitoring & Logging
+
+- **Application Logs**: Winston or Pino logger
+- **Error Tracking**: Sentry
+- **Metrics**: Prometheus + Grafana
+- **Uptime**: UptimeRobot or similar
+
+---
+
+## Next Steps
+
+- [x] Complete system design
+- [x] Set up monorepo structure
+- [x] Implement database schema
+- [ ] Build core API
+- [ ] Create first connector (WhatsApp)
+- [x] Build client SDK (basic structure)
+- [x] Create dashboard UI (basic structure)
+- [x] Write documentation
+- [ ] Add tests and CI/CD
+
+---
+
+**Document Version**: 1.0  
+**Last Updated**: 2025-10-29  
+**Author**: Isaac Emmanuel
+
