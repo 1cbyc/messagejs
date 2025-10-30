@@ -73,8 +73,10 @@ export class WhatsAppConnector implements IConnector {
     // A more robust solution might use a library like Mustache.js.
     let messageBody = template.body;
     for (const key in variables) {
+      // Escape regex metacharacters in the key to prevent regex injection
+      const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       messageBody = messageBody.replace(
-        new RegExp(`{{${key}}}`, 'g'),
+        new RegExp(`{{${escapedKey}}}`, 'g'),
         variables[key],
       );
     }
@@ -89,48 +91,42 @@ export class WhatsAppConnector implements IConnector {
     };
 
     try {
-      console.log(
-        `[WhatsAppConnector] Simulating API call to: POST ${apiUrl}`,
-      );
-      console.log(
-        `[WhatsAppConnector] Request Body:`,
-        JSON.stringify(requestBody, null, 2),
-      );
-
-      // --- Mock API Call ---
-      // In a real implementation, you would use a robust HTTP client like axios or node-fetch
-      // to make the following request:
-      /*
+      // Use node's built-in fetch to make the API call to the WhatsApp Cloud API.
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.credentials.accessToken}`,
+          Authorization: `Bearer ${this.credentials.accessToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
       });
-      const responseData = await response.json();
-      if (!response.ok) {
-        throw new Error(responseData.error?.message || 'Unknown API error');
-      }
-      const externalId = responseData.messages[0]?.id;
-      */
 
-      // For now, we simulate a successful response after a short delay.
-      await new Promise((resolve) => setTimeout(resolve, 250));
-      const mockExternalId = `wamid.mock_${Date.now()}`;
+      const responseData = (await response.json()) as any;
+
+      // If the response is not successful, parse the error and throw.
+      if (!response.ok) {
+        const errorMessage =
+          responseData.error?.message || 'Unknown WhatsApp API error';
+        throw new Error(errorMessage);
+      }
+
+      // Extract the message ID from the successful response.
+      const externalId = responseData.messages?.[0]?.id;
+      if (!externalId) {
+        throw new Error('Could not find message ID in WhatsApp API response.');
+      }
 
       return {
         success: true,
-        externalId: mockExternalId,
-        details: { info: 'Message sent successfully (mocked response).' },
+        externalId,
+        details: { response: responseData },
       };
     } catch (error: any) {
       console.error(`[WhatsAppConnector] Failed to send message: ${error.message}`);
       return {
         success: false,
         error: error.message,
-        details: { info: 'The API call failed (mocked error).' },
+        details: { info: 'The API call to WhatsApp failed.' },
       };
     }
   }

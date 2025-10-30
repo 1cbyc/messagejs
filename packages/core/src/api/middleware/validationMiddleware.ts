@@ -29,11 +29,17 @@ export const validate =
     try {
       // Asynchronously parse and validate the request object.
       // This allows Zod to handle async refinements if they are ever added.
-      await schema.parseAsync({
+      const parsed = await schema.parseAsync({
         body: req.body,
         query: req.query,
         params: req.params,
       });
+
+      // Replace the original request values with the sanitized Zod output
+      // This ensures unknown fields are stripped and data is properly typed
+      req.body = parsed.body;
+      req.query = parsed.query;
+      req.params = parsed.params;
 
       // If validation is successful, proceed to the next middleware or controller.
       return next();
