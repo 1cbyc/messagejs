@@ -1,0 +1,45 @@
+# docker-compose.yml
+#
+# This file defines the development environment services for the MessageJS project.
+# It uses Docker to create a consistent and isolated PostgreSQL database instance.
+#
+# To use this file:
+# 1. Make sure you have Docker and Docker Compose installed.
+# 2. Run `docker-compose up -d` from the root of the project to start the database in the background.
+# 3. The PostgreSQL database will be available on localhost:5432.
+# 4. To stop the services, run `docker-compose down`.
+
+version: '3.8'
+
+services:
+  # Defines the PostgreSQL database service.
+  postgres:
+    # Use the official PostgreSQL image, specifying a version for consistency.
+    # The 'alpine' tag is used for a smaller image size.
+    image: postgres:15-alpine
+    container_name: messagejs_postgres_dev
+
+    # Environment variables to configure the PostgreSQL instance.
+    # These MUST match the credentials in `packages/core/.env`.
+    environment:
+      POSTGRES_USER: messagejs
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: messagejs_dev
+
+    # Maps port 5432 of the container to port 5432 on the host machine.
+    # This allows our Node.js application (running on the host) to connect to the database.
+    ports:
+      - "5432:5432"
+
+    # Defines a volume to persist the database data.
+    # This ensures that your data is not lost when the container is stopped or removed.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    # Restart policy: ensures the container will restart automatically if it stops.
+    restart: always
+
+# Defines the named volume used by the postgres service for data persistence.
+volumes:
+  postgres_data:
+    driver: local
