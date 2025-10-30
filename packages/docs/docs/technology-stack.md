@@ -154,7 +154,7 @@ MessageJS is built with modern, production-ready technologies.
 ## Performance Considerations
 
 ### Bundle Size
-- SDK < 20KB gzipped
+- SDK less than 20KB gzipped
 - Tree-shaking enabled
 - Code splitting
 

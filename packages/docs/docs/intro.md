@@ -28,7 +28,7 @@ Web developers often need to send transactional messages (e.g., OTPs, notificati
 - **Simplicity**: The client-side SDK should be intuitive, with a minimal API surface (`init`, `send`).
 - **Security**: Frontend applications should never handle raw credentials. All communication is secured via per-project API keys.
 - **Modularity**: The backend must support new messaging providers through a pluggable "connector" architecture.
-- **Performance**: The client-side SDK must be lightweight (<20KB gzipped) to avoid impacting web application performance.
+- **Performance**: The client-side SDK must be lightweight (less than 20KB gzipped) to avoid impacting web application performance.
 
 ## Architecture Overview
 
