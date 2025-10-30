@@ -19,9 +19,16 @@ export interface MessageJSConfig {
   /**
    * The base URL of the MessageJS API. Defaults to the official cloud endpoint.
    * Useful for self-hosted instances.
-   * @default "https://api.messagejs.pro/v1"
+   * @default "https://api.messagejs.pro/api/v1"
    */
   baseUrl?: string;
+
+  /**
+   * The number of times to retry a failed request. Defaults to 0.
+   * Retries are only attempted on 429 (Rate Limit) and 5xx server errors.
+   * @default 0
+   */
+  retries?: number;
 }
 
 /**
@@ -48,10 +55,6 @@ export interface SendParams {
    */
   variables: Record<string, any>;
 
-  /**
-   * Optional metadata to associate with the message for logging or tracking.
-   */
-  metadata?: Record<string, any>;
 }
 
 /**
@@ -64,9 +67,9 @@ export interface SendResult {
   messageId: string;
 
   /**
-   * The initial status of the message. Will typically be 'queued'.
+   * The initial status of the message. Will always be 'queued' upon success.
    */
-  status: string;
+  status: 'queued';
 
   /**
    * An error message if the API request failed at the validation stage.
@@ -81,7 +84,8 @@ export interface SendResult {
  */
 class MessageJS {
   private apiKey?: string;
-  private baseUrl: string = 'https://api.messagejs.pro/v1';
+  private baseUrl: string = 'https://api.messagejs.pro/api/v1';
+  private retries: number = 0;
 
   /**
    * Initializes the SDK with your project's public API key and optional configuration.
@@ -97,6 +101,9 @@ class MessageJS {
       if (config.baseUrl) {
         // Ensure the base URL doesn't have a trailing slash
         this.baseUrl = config.baseUrl.replace(/\/$/, '');
+      }
+      if (config.retries) {
+        this.retries = Math.max(0, config.retries);
       }
     }
   }
@@ -114,34 +121,60 @@ class MessageJS {
       );
     }
 
-    try {
-      const response = await fetch(`${this.baseUrl}/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify(params),
-      });
+    let lastError: Error = new Error('Failed to send message.');
+    const idempotencyKey = crypto.randomUUID();
 
-      const result = await response.json();
+    for (let attempt = 0; attempt <= this.retries; attempt++) {
+      try {
+        // On subsequent attempts, wait with exponential backoff + jitter.
+        if (attempt > 0) {
+          const delay = 100 * Math.pow(2, attempt - 1) + Math.random() * 100;
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
 
-      if (!response.ok) {
-        // The API returned an error response
-        const errorMessage = result.error?.message || `HTTP error! Status: ${response.status}`;
-        throw new Error(errorMessage);
+        const response = await fetch(`${this.baseUrl}/messages`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.apiKey}`,
+            'Idempotency-Key': idempotencyKey,
+          },
+          body: JSON.stringify({
+            connectorId: params.connectorId,
+            templateId: params.templateId,
+            to: params.to,
+            variables: params.variables,
+          }),
+        });
+
+        if (response.ok) {
+          return (await response.json()) as SendResult;
+        }
+
+        // --- Handle non-retryable errors ---
+        // For 4xx errors other than 429, we fail immediately.
+        if (response.status !== 429 && response.status < 500) {
+          const errorBody = (await response.json()) as any;
+          const message =
+            errorBody.error?.message || `HTTP error! Status: ${response.status}`;
+          throw new Error(message);
+        }
+
+        // --- Handle retryable errors ---
+        // For 429 or 5xx errors, we set the last error and let the loop continue.
+        lastError = new Error(`HTTP error! Status: ${response.status}`);
+      } catch (error: any) {
+        // Catches network errors and non-retryable errors thrown above.
+        lastError = error;
+        // If the error was non-retryable, we exit the loop immediately.
+        if (error.message.startsWith('HTTP error!')) {
+          break;
+        }
       }
-
-      return {
-        messageId: result.messageId,
-        status: result.status,
-      };
-    } catch (error: any) {
-      // Handle network errors or exceptions during the fetch call
-      return Promise.reject(
-        new Error(`Failed to send message: ${error.message}`),
-      );
     }
+
+    // If we've exhausted all retries, throw the last error we saw.
+    throw lastError;
   }
 }
 

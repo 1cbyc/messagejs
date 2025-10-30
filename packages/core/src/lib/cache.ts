@@ -101,7 +101,11 @@ export async function set(
  */
 export async function del(keys: string | string[]): Promise<void> {
   try {
-    await cacheClient.del(keys);
+    // Ensure keys is always an array for the spread operator.
+    const keysToDelete = Array.isArray(keys) ? keys : [keys];
+    if (keysToDelete.length > 0) {
+      await cacheClient.del(keysToDelete);
+    }
   } catch (error) {
     logger.error({ err: error, keys }, 'Error deleting from cache.');
   }
