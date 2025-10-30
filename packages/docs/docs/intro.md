@@ -13,7 +13,7 @@ MessageJS is like SendGrid/EmailJS, but for chat applications. It provides:
 
 ## Getting Started
 
-See the [Quick Start Guide](quick-start) to get up and running in minutes.
+See the Quick Start Guide to get up and running in minutes.
 
 ## Architecture
 
