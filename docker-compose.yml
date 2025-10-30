@@ -29,7 +29,7 @@ services:
     # Maps port 5432 of the container to port 5432 on the host machine.
     # This allows our Node.js application (running on the host) to connect to the database.
     ports:
-      - "5432:5432"
+      - "5433:5432"
 
     # Defines a volume to persist the database data.
     # This ensures that your data is not lost when the container is stopped or removed.
