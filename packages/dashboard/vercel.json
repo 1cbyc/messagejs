@@ -1,12 +1,8 @@
 {
-  "version": 2,
   "buildCommand": "cd ../.. && npm install && npm run build --workspace=packages/dashboard",
   "devCommand": "cd ../.. && npm run dashboard",
   "installCommand": "cd ../.. && npm install",
   "framework": "nextjs",
-  "rootDirectory": "packages/dashboard",
-  "env": {
-    "NEXT_PUBLIC_API_URL": "@next_public_api_url"
-  }
+  "rootDirectory": "packages/dashboard"
 }
 
