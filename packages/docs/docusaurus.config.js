@@ -4,7 +4,7 @@
 const config = {
   title: 'MessageJS',
   tagline: 'SendGrid, but for chat apps',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/logo.png',
 
   url: 'https://docs.messagejs.pro',
   baseUrl: '/',
@@ -42,7 +42,7 @@ const config = {
         title: 'MessageJS',
         logo: {
           alt: 'MessageJS Logo',
-          src: 'img/logo.svg',
+          src: 'img/logo.png',
         },
         items: [
           {
