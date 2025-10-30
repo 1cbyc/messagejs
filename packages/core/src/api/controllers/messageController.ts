@@ -4,14 +4,11 @@
 
 import { Request, Response } from 'express';
 import {
-  SendMessageRequest,
   SendMessageSuccessResponse,
   ApiErrorResponse,
 } from '../../types/apiTypes';
 import prisma from '../../lib/prisma';
 import { messageQueue } from '../../queues/messageQueue';
-import { getOrSet } from '../../lib/cache';
-import { Service, Template } from '@prisma/client';
 import logger from '../../lib/logger';
 
 /**
@@ -44,19 +41,15 @@ export const sendMessage = async (
     // The Zod validation middleware has already ensured the body is well-formed.
     const { serviceId, templateId, recipient } = req.body;
 
-    // Step 3: Fetch the service and template, using the cache to reduce DB load.
+    // Step 3: Fetch the service and template from the database in parallel.
     // We also ensure they belong to the correct project for authorization.
     const [service, template] = await Promise.all([
-      getOrSet(`service:${serviceId}`, () =>
-        prisma.service.findFirst({
-          where: { id: serviceId, projectId: projectId },
-        }),
-      ),
-      getOrSet(`template:${templateId}`, () =>
-        prisma.template.findFirst({
-          where: { id: templateId, projectId: projectId },
-        }),
-      ),
+      prisma.service.findFirst({
+        where: { id: serviceId, projectId: projectId },
+      }),
+      prisma.template.findFirst({
+        where: { id: templateId, projectId: projectId },
+      }),
     ]);
 
     // Step 4: Verify that both the service and template exist and are linked to the project.

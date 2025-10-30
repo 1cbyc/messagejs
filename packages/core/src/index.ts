@@ -16,6 +16,7 @@ dotenv.config();
 
 const app = express();
 
+
 // The port the application will listen on.
 // It will use the PORT from the .env file, or default to 3001.
 const PORT = process.env.PORT || 3001;
@@ -40,6 +41,18 @@ app.use('/api/v1/messages', messageRouter);
 
 // Mount the webhook router for all requests to /api/v1/webhooks.
 app.use('/api/v1/webhooks', webhookRouter);
+
+// --- Error Handling ---
+// Generic error handler to catch any other errors
+app.use((err: Error, req: Request, res: Response) => {
+  logger.error({ err, url: req.url }, 'Unhandled error in request');
+  res.status(500).json({
+    error: {
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'An unexpected error occurred',
+    },
+  });
+});
 
 // --- Start Server ---
 
