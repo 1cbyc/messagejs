@@ -2,25 +2,27 @@ import * as React from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
-import Brackets from './brackets';
 
 const buttonVariants = cva(
-  'relative flex items-center border transition-colors uppercase text-xs tracking-[0.2em]',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
-        default: 'border-white hover:bg-white/10',
-        destructive: 'border-red-500 text-red-300 hover:bg-red-500/10',
-        outline: 'border-gray-700 hover:bg-white/5',
-        secondary: 'border-gray-600 hover:bg-white/5',
-        ghost: 'border-gray-800 hover:bg-white/5',
-        link: 'border-0 hover:bg-white/5',
+        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        destructive:
+          'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+        outline:
+          'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+        secondary:
+          'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+        ghost: 'hover:bg-accent hover:text-accent-foreground',
+        link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
-        default: 'h-10 px-4',
-        sm: 'h-8 text-[11px] px-3',
-        lg: 'h-11 px-8',
-        icon: 'h-10 w-10 aspect-square justify-center px-0',
+        default: 'h-10 px-4 py-2',
+        sm: 'h-9 rounded-md px-3',
+        lg: 'h-11 rounded-md px-8',
+        icon: 'h-10 w-10',
       },
     },
     defaultVariants: {
@@ -34,33 +36,17 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
-  showBrackets?: boolean;
-  icon?: React.ReactNode;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, showBrackets = true, icon, children, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button';
     return (
-      <div className="relative">
-        <Comp
-          className={cn(buttonVariants({ variant, size, className }), icon && !size?.includes('icon') && 'pl-0')}
-          ref={ref}
-          {...props}
-        >
-          {icon && (
-            <span className="bg-white/10 h-full aspect-square flex items-center justify-center px-2">
-              {icon}
-            </span>
-          )}
-          {children && <span className={icon ? 'pr-2' : 'px-4'}>{children}</span>}
-        </Comp>
-        {showBrackets && (
-          <div className="opacity-100">
-            <Brackets />
-          </div>
-        )}
-      </div>
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
     );
   },
 );
