@@ -11,8 +11,8 @@ import {
   SendOptions,
   SendResult,
   ConnectorStatus,
-} from './IConnector';
-import { ServiceType } from '../types/dataModels';
+  ConnectorType,
+} from '@messagejs/shared-types';
 import logger from '../lib/logger';
 
 /**
@@ -24,7 +24,8 @@ interface WhatsAppCredentials {
 }
 
 export class WhatsAppConnector implements IConnector {
-  public readonly type: ServiceType = 'WHATSAPP';
+  // Use the lowercase string union type for public consistency.
+  public readonly type: ConnectorType = 'whatsapp';
   public readonly name: string = 'WhatsApp Cloud API';
 
   private credentials: WhatsAppCredentials;
@@ -44,19 +45,22 @@ export class WhatsAppConnector implements IConnector {
     this.credentials = credentials;
   }
 
-  /**
-   * Validates the provided credentials by checking for their presence.
-   * A real-world implementation would make a test API call to Meta's servers.
-   * @returns {Promise<ConnectorStatus>} The status of the credential validation.
-   */
-  public async validate(): Promise<ConnectorStatus> {
-    // In a production system, this method would make a lightweight API call
-    // to verify the token is valid, e.g., fetching the business profile.
+  public async validate(): Promise<boolean> {
+    const status = await this.getStatus();
+    return status.connected;
+  }
+
+  public async getStatus(): Promise<ConnectorStatus> {
+    // A real validation should make a lightweight API call to Meta.
+    // For now, we just check for presence, which is sufficient for basic setup.
     if (this.credentials.accessToken && this.credentials.phoneNumberId) {
-      return { success: true, message: 'Credentials format is correct.' };
+      return {
+        connected: true,
+        message: 'Credentials appear to be valid.',
+      };
     }
     return {
-      success: false,
+      connected: false,
       message: 'Credentials are missing required fields.',
     };
   }
@@ -66,28 +70,20 @@ export class WhatsAppConnector implements IConnector {
    * @param {SendOptions} options - The options for the message to be sent.
    * @returns {Promise<SendResult>} The result of the send operation.
    */
-  public async sendMessage(options: SendOptions): Promise<SendResult> {
-    const { to, template, variables } = options;
+  // The signature now matches the standardized IConnector interface.
+  public async sendMessage(
+    to: string,
+    message: string,
+    _options?: SendOptions, // options is available for future use (e.g., metadata)
+  ): Promise<SendResult> {
     const apiUrl = `${this.baseUrl}/${this.credentials.phoneNumberId}/messages`;
-
-    // A simple variable replacement for the template body.
-    // A more robust solution might use a library like Mustache.js.
-    let messageBody = template.body;
-    for (const key in variables) {
-      // Escape regex metacharacters in the key to prevent regex injection
-      const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      messageBody = messageBody.replace(
-        new RegExp(`{{${escapedKey}}}`, 'g'),
-        variables[key],
-      );
-    }
 
     const requestBody = {
       messaging_product: 'whatsapp',
       to: to,
       type: 'text',
       text: {
-        body: messageBody,
+        body: message, // The message is now passed directly, already rendered.
       },
     };
 
@@ -119,16 +115,17 @@ export class WhatsAppConnector implements IConnector {
 
       return {
         success: true,
-        externalId,
-        details: { response: responseData },
+        externalId: externalId,
+        status: 'sent',
       };
     } catch (error: any) {
       logger.error({ error, recipient: to }, 'WhatsApp connector failed to send message');
       return {
         success: false,
         error: error.message,
-        details: { info: 'The API call to WhatsApp failed.' },
+        status: 'failed',
       };
     }
   }
+
 }

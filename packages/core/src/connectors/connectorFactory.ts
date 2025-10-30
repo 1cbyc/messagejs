@@ -7,8 +7,8 @@
  * implementations, making the system modular and easy to extend.
  */
 
-import { ServiceType } from '../types/dataModels';
-import { IConnector } from './IConnector';
+import { IConnector } from '@messagejs/shared-types';
+import { ServiceType } from '@prisma/client';
 import { WhatsAppConnector } from './whatsappConnector';
 
 // Define a type for the decrypted credentials object for better type safety.
@@ -33,7 +33,8 @@ export class ConnectorFactory {
     credentials: DecryptedCredentials,
   ): IConnector {
     switch (type) {
-      case 'WHATSAPP':
+      case ServiceType.WHATSAPP:
+        // Create and return an instance of the WhatsApp connector.
         return new WhatsAppConnector(credentials);
 
       // case 'TELEGRAM':

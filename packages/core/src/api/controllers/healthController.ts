@@ -43,7 +43,7 @@ interface HealthStatus {
  * @access Public
  */
 export const checkHealth = async (
-  req: Request,
+  _req: Request,
   res: Response<HealthStatus>,
 ) => {
   let dbStatus: 'ok' | 'error' = 'ok';

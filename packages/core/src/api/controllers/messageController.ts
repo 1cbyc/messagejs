@@ -6,10 +6,11 @@ import { Request, Response } from 'express';
 import {
   SendMessageSuccessResponse,
   ApiErrorResponse,
-} from '../../types/apiTypes';
+} from '@messagejs/shared-types';
 import prisma from '../../lib/prisma';
 import { messageQueue } from '../../queues/messageQueue';
 import logger from '../../lib/logger';
+import { messagesQueuedCounter } from './metricsController';
 
 /**
  * @controller sendMessage
@@ -37,15 +38,40 @@ export const sendMessage = async (
       });
     }
 
+    // --- Idempotency Check ---
+    const idempotencyKey = req.headers['idempotency-key'] as string | undefined;
+
+    if (idempotencyKey) {
+      const existingLog = await prisma.messageLog.findUnique({
+        where: { idempotencyKey },
+      });
+
+      // If a log exists and it belongs to the current project, return the original response.
+      if (existingLog && existingLog.projectId === projectId) {
+        logger.info(
+          {
+            idempotencyKey,
+            messageId: existingLog.id,
+            projectId,
+          },
+          'Idempotent request detected. Returning existing message log.',
+        );
+        return res.status(200).json({
+          messageId: existingLog.id,
+          status: 'queued', // The original success response status
+        });
+      }
+    }
+
     // Step 2: Extract the validated request body.
     // The Zod validation middleware has already ensured the body is well-formed.
-    const { serviceId, templateId, recipient } = req.body;
+    const { connectorId, templateId, to, variables } = req.body;
 
     // Step 3: Fetch the service and template from the database in parallel.
     // We also ensure they belong to the correct project for authorization.
     const [service, template] = await Promise.all([
       prisma.service.findFirst({
-        where: { id: serviceId, projectId: projectId },
+        where: { id: connectorId, projectId: projectId },
       }),
       prisma.template.findFirst({
         where: { id: templateId, projectId: projectId },
@@ -57,7 +83,7 @@ export const sendMessage = async (
       return res.status(404).json({
         error: {
           code: 'NOT_FOUND',
-          message: `Service with ID '${serviceId}' not found or does not belong to your project.`,
+          message: `Connector with ID '${connectorId}' not found or does not belong to your project.`,
         },
       });
     }
@@ -75,10 +101,12 @@ export const sendMessage = async (
     const messageLog = await prisma.messageLog.create({
       data: {
         projectId: projectId,
-        serviceId: serviceId,
-        recipient: recipient,
-        status: 'QUEUED', // Using the enum from our Prisma schema
-        // TODO: In a real implementation, we would store the rendered template + variables
+        idempotencyKey: idempotencyKey, // Store the key to prevent future duplicates
+        serviceId: connectorId,
+        templateId: templateId,
+        recipient: to,
+        variables: variables,
+        status: 'QUEUED',
       },
     });
 
@@ -88,15 +116,38 @@ export const sendMessage = async (
       messageLogId: messageLog.id,
     });
 
+    // Increment the Prometheus counter for queued messages.
+    messagesQueuedCounter.inc({
+      projectId,
+      connectorId,
+    });
+
+    // Add structured log for successful queuing
+    logger.info(
+      {
+        messageId: messageLog.id,
+        projectId,
+        connectorId,
+        templateId,
+      },
+      'Message successfully queued for sending.',
+    );
+
     // Step 7: Return a 202 Accepted response, confirming the message is queued.
     return res.status(202).json({
       messageId: messageLog.id,
       status: 'queued',
-      externalId: null,
-      details: 'Message has been successfully queued for processing.',
     });
   } catch (error: any) {
-    logger.error({ error, projectId: req.apiKey?.projectId }, 'Failed to process message');
+    logger.error(
+      {
+        err: error,
+        projectId: req.apiKey?.projectId,
+        idempotencyKey: req.headers['idempotency-key'],
+        body: req.body,
+      },
+      'Failed to process message',
+    );
     return res.status(500).json({
       error: {
         code: 'INTERNAL_SERVER_ERROR',

@@ -9,6 +9,8 @@ import dotenv from 'dotenv';
 import messageRouter from './api/routes/messageRoutes';
 import webhookRouter from './api/routes/webhookRoutes';
 import healthRouter from './api/routes/healthRoutes';
+import authRouter from './api/routes/authRoutes';
+import metricsRouter from './api/routes/metricsRoutes';
 import logger, { httpLogger } from './lib/logger';
 
 // Load environment variables from a .env file into process.env
@@ -33,6 +35,9 @@ app.use(httpLogger);
 
 // --- API Routes ---
 
+// Mount the metrics router. This is typically not versioned under /api/v1.
+app.use('/metrics', metricsRouter);
+
 // Mount the health check router.
 app.use('/api/v1/health', healthRouter);
 
@@ -41,6 +46,9 @@ app.use('/api/v1/messages', messageRouter);
 
 // Mount the webhook router for all requests to /api/v1/webhooks.
 app.use('/api/v1/webhooks', webhookRouter);
+
+// Mount the auth router for all requests to /api/v1/auth.
+app.use('/api/v1/auth', authRouter);
 
 // --- Error Handling ---
 // Generic error handler to catch any other errors
