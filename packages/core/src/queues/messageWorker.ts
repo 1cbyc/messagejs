@@ -77,6 +77,11 @@ const processMessageJob = async (job: Job<MessageJobData>) => {
     throw new Error(`Service configuration not found for MessageLog ID: ${messageLogId}`);
   }
 
+  // Check if templateId is present
+  if (!messageLog.templateId) {
+    throw new Error(`Template ID is missing for MessageLog ID: ${messageLogId}`);
+  }
+
   // Fetch the template explicitly using templateId from the message log
   const template = await prisma.template.findFirst({
     where: { id: messageLog.templateId, projectId: messageLog.projectId },
