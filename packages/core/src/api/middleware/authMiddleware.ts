@@ -4,6 +4,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import prisma from '../../lib/prisma';
 
 /**
  * @middleware validateApiKey
@@ -48,34 +49,39 @@ export const validateApiKey = async (
     });
   }
 
-  // --- Mock Implementation ---
-  // In a real application, this section would involve:
-  // 1. Hashing the provided `apiKey` if we store hashes.
-  // 2. Querying the `APIKeys` table in the database for a matching key/hash.
-  // 3. Checking if the key is active and belongs to an active project.
-  // 4. Caching the result in Redis for performance.
+  try {
+    // Find the project associated with the provided API key.
+    // In a production environment, you might also want to select only necessary fields.
+    const project = await prisma.project.findUnique({
+      where: { apiKey },
+    });
 
-  const MOCK_API_KEY = 'pk_live_a1b2c3d4e5f6g7h8i9j0';
-  const MOCK_PROJECT_ID = 'proj_123456789';
-  const MOCK_API_KEY_ID = 'key_abcdefgh';
+    // If no project is found for the given key, or if the project is inactive, deny access.
+    if (!project) {
+      return res.status(403).json({
+        error: {
+          code: 'AUTH_INVALID_KEY',
+          message: 'The provided API key is not valid.',
+        },
+      });
+    }
 
-  if (apiKey === MOCK_API_KEY) {
-    // Attach the validated API key information to the request object.
+    // Attach the validated project information to the request object.
     // This makes it available to downstream controllers.
     req.apiKey = {
-      id: MOCK_API_KEY_ID,
-      projectId: MOCK_PROJECT_ID,
+      id: project.apiKey, // The API key itself
+      projectId: project.id,
     };
 
     // The key is valid, proceed to the next middleware or controller.
     return next();
+  } catch (error) {
+    console.error('API Key validation error:', error);
+    return res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'An error occurred during API key validation.',
+      },
+    });
   }
-
-  // If the key does not match, it is considered invalid.
-  return res.status(403).json({
-    error: {
-      code: 'AUTH_INVALID_KEY',
-      message: 'The provided API key is not valid.',
-    },
-  });
 };
