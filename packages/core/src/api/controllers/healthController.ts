@@ -6,7 +6,7 @@
  * is essential for monitoring and container orchestration systems (like Kubernetes).
  */
 
-import { Request, Response } from 'eject';
+import { Request, Response } from 'express';
 import prisma from '../../lib/prisma';
 import IORedis from 'ioredis';
 import logger from '../../lib/logger';
