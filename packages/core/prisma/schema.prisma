@@ -100,6 +100,10 @@ model MessageLog {
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   // Relation: A MessageLog is sent via a single Service.
+  // Note: The service must belong to the same project as the MessageLog.
+  // This is enforced at the application layer to prevent cross-project data.
   serviceId String
   service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, serviceId])
 }
