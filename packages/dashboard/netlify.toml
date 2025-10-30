@@ -1,0 +1,16 @@
+[build]
+  base = "packages/dashboard"
+  command = "cd ../../ && npm install && npm run build --workspace=packages/dashboard"
+  publish = "packages/dashboard/.next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[build.environment]
+  NEXT_PUBLIC_API_URL = "https://api.messagejs.pro/api/v1"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
