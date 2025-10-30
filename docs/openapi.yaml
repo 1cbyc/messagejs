@@ -41,11 +41,18 @@ paths:
               $ref: "#/components/schemas/SendMessageRequest"
       responses:
         "202":
-          description: Message Accepted for Processing. The request was successful and the message has been queued for sending.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SendMessageSuccessResponse"
+          '200':
+                    description: OK. The request was successful due to idempotency. The original response for this `Idempotency-Key` is returned.
+                    content:
+                      application/json:
+                        schema:
+                          $ref: '#/components/schemas/SendMessageSuccessResponse'
+                  '202':
+                    description: Message Accepted for Processing. The request was successful and the message has been queued for sending.
+                    content:
+                      application/json:
+                        schema:
+                          $ref: '#/components/schemas/SendMessageSuccessResponse'
         "400":
           description: Bad Request. The request body is invalid or missing required fields.
           content:

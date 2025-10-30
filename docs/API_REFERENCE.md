@@ -120,7 +120,7 @@ Authorization: Bearer <api_key_placeholder>
 }
 ```
 
-**Note on Idempotency:** To prevent duplicate messages, you can include an `Idempotency-Key: <uuid>` header in your request. If a request with the same key is received, the server will return the original success response without creating a duplicate message.
+**Note on Idempotency:** To prevent duplicate messages, you can include an `Idempotency-Key: <uuid>` header in your request. If a request with the same key is received, the server will return a `200 OK` response with the original queued message details without creating a duplicate message.
 
 **Error Response:** `400 Bad Request`
 ```json
