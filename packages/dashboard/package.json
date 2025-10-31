@@ -11,6 +11,9 @@
     "typecheck": "tsc --noEmit",
     "vercel-build": "cd ../.. && npm run build --workspace=@messagejs/shared-types && cd packages/dashboard && next build"
   },
+  "engines": {
+    "node": ">=18.17.0"
+  },
   "dependencies": {
     "@messagejs/shared-types": "*",
     "@radix-ui/react-dialog": "^1.1.15",

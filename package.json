@@ -7,12 +7,14 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces",
-    "dev": "npm run dev --workspaces",
-    "test": "npm run test --workspaces",
-    "lint": "npm run lint --workspaces",
-    "typecheck": "npm run typecheck --workspaces",
-    "clean": "npm run clean --workspaces && rm -rf node_modules",
+    "build": "npm run build --workspaces --if-present",
+    "build:core": "npm run build --workspace=@messagejs/shared-types && npm run build --workspace=@messagejs/core",
+    "build:all": "npm run build --workspaces --if-present || true",
+    "dev": "npm run dev --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present && rm -rf node_modules",
     "core": "npm run dev --workspace=packages/core",
     "client": "npm run dev --workspace=packages/client",
     "dashboard": "npm run dev --workspace=packages/dashboard",
@@ -21,6 +23,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
+    "semver": "^7.7.3",
     "typescript": "^5.3.3"
   },
   "engines": {
@@ -29,7 +32,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/messagejs/messagejs.git"
+    "url": "https://github.com/1cbyc/messagejs.git"
   },
   "keywords": [
     "messaging",
@@ -40,6 +43,6 @@
     "api",
     "chat"
   ],
-  "author": "MessageJS Team",
+  "author": "Isaac Emmanuel",
   "license": "MIT"
 }
