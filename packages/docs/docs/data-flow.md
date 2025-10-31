@@ -148,6 +148,6 @@ graph LR
 ## Next Steps
 
 - [Technology Stack](./technology-stack)
-- [Core Components](./core-components) (coming soon)
-- [API Reference](./api-reference) (coming soon)
+- Core Components (coming soon)
+- API Reference (coming soon)
 

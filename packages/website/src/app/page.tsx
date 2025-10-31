@@ -32,7 +32,7 @@ export default function HomePage() {
                 Pricing
               </Link>
               <Button variant="outline" asChild>
-                <Link href="https://docs.messagejs.pro">Sign In</Link>
+                <Link href="https://app.messagejs.pro/login">Sign In</Link>
               </Button>
             </div>
           </div>
@@ -52,7 +52,7 @@ export default function HomePage() {
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Button size="lg" asChild>
-                <Link href="https://docs.messagejs.pro">
+                <Link href="https://app.messagejs.pro/register">
                   Get Started
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
@@ -231,7 +231,7 @@ console.log('Message sent:', result.id);`}</code>
                 </li>
               </ul>
               <Button className="mt-8 w-full" variant="outline" asChild>
-                <Link href="https://docs.messagejs.pro">Get Started</Link>
+                <Link href="https://app.messagejs.pro/register">Get Started</Link>
               </Button>
             </div>
 
@@ -264,7 +264,7 @@ console.log('Message sent:', result.id);`}</code>
                 </li>
               </ul>
               <Button className="mt-8 w-full" asChild>
-                <Link href="https://docs.messagejs.pro">Get Started</Link>
+                <Link href="https://app.messagejs.pro/register">Get Started</Link>
               </Button>
             </div>
 
@@ -317,7 +317,7 @@ console.log('Message sent:', result.id);`}</code>
                 </Link>
               </Button>
               <Button size="lg" asChild>
-                <Link href="https://docs.messagejs.pro">Get Started Free</Link>
+                <Link href="https://app.messagejs.pro/register">Get Started Free</Link>
               </Button>
             </div>
           </div>
@@ -398,4 +398,3 @@ console.log('Message sent:', result.id);`}</code>
     </div>
   );
 }
-
