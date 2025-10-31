@@ -35,10 +35,6 @@ export const createTemplateSchema = z.object({
     .optional()
     .default([]),
   connectorType: z.enum(supportedConnectors, {
-    errorMap: () => ({
-      message: `Connector type is required and must be one of: ${supportedConnectors.join(
-        ', ',
-      )}`,
-    }),
+    message: `Connector type is required and must be one of: ${supportedConnectors.join(', ')}`,
   }),
 });

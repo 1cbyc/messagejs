@@ -21,11 +21,7 @@ const supportedConnectors = [
  */
 export const createConnectorSchema = z.object({
   type: z.enum(supportedConnectors, {
-    errorMap: () => ({
-      message: `Connector 'type' is required and must be one of: ${supportedConnectors.join(
-        ', ',
-      )}`,
-    }),
+    message: `Connector 'type' is required and must be one of: ${supportedConnectors.join(', ')}`,
   }),
   credentials: z
     .record(z.string(), z.any())

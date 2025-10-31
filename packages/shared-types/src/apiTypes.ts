@@ -1,8 +1,11 @@
 /**
  * TypeScript interfaces for API requests and responses.
+ * These types define the public contract between the frontend dashboard/SDK and the backend API.
  */
 
-import { Project } from './dataModels';
+import { ConnectorType, MessageStatus, Project } from './dataModels';
+
+// --- Generic API Types ---
 
 /**
  * Defines the standard structure for a detailed API error.
@@ -20,26 +23,20 @@ export interface ApiErrorResponse {
   error: ApiError;
 }
 
-// --- Message Sending API ---
+// --- Message Sending API (for SDK) ---
 
 /**
  * Defines the request body for the `POST /api/v1/messages` endpoint.
- * This contract is used by the client SDK to send a message.
  */
 export interface SendMessageRequest {
-  /** The recipient's identifier (e.g., phone number). */
   to: string;
-  /** The unique identifier for the connector to use (`conn_...`). */
   connectorId: string;
-  /** The unique identifier for the template to use (`tpl_...`). */
   templateId: string;
-  /** A key-value map of variables to be interpolated into the template. */
   variables: Record<string, any>;
 }
 
 /**
- * The successful response for a sendMessage request, indicating the message
- * has been accepted and queued for processing.
+ * The successful response for a sendMessage request.
  */
 export interface SendMessageSuccessResponse {
   messageId: string;
@@ -68,24 +65,35 @@ export interface AuthSuccessResponse {
   token: string;
 }
 
-export type RegisterResponse = AuthSuccessResponse | ApiErrorResponse;
-export type LoginResponse = AuthSuccessResponse | ApiErrorResponse;
+export type RegisterResponse = AuthSuccessResponse; // Success only, errors are thrown
+export type LoginResponse = AuthSuccessResponse; // Success only, errors are thrown
 
 // --- Project Management API ---
 
 export interface CreateProjectRequest {
   name: string;
+  description?: string;
 }
 
-export type CreateProjectResponse = Project | ApiErrorResponse;
+export type CreateProjectResponse = Project;
 
 export interface GetProjectsResponse {
   projects: Project[];
 }
 
-// --- Connector Management API ---
+// --- API Key Management API ---
 
-import { ConnectorType } from './dataModels';
+export interface ApiKeyResponse {
+  id: string;
+  publicKey: string;
+  createdAt: string;
+}
+
+export interface GetApiKeysResponse {
+  apiKeys: ApiKeyResponse[];
+}
+
+// --- Connector Management API ---
 
 export interface CreateConnectorRequest {
   type: ConnectorType;
@@ -94,7 +102,7 @@ export interface CreateConnectorRequest {
 
 export interface ConnectorResponse {
   id: string;
-  type: string; // Prisma enum will be a string here
+  type: string;
   createdAt: string;
 }
 
@@ -114,31 +122,9 @@ export interface CreateTemplateRequest {
 export interface TemplateResponse {
   id: string;
   name: string;
-  connectorType: string; // Prisma's `ServiceType` enum
-  body: string; // Note: `content` on request, `body` on response
-  variables: string | null; // Stored as a JSON string
-  createdAt: string;
-}
-
-export interface GetTemplatesResponse {
-  templates: TemplateResponse[];
-}
-
-// --- Template Management API ---
-
-export interface CreateTemplateRequest {
-  name: string;
-  content: string;
-  variables?: string[];
-  connectorType: ConnectorType;
-}
-
-export interface TemplateResponse {
-  id: string;
-  name: string;
-  connectorType: string; // Prisma's `ServiceType` enum
-  body: string; // Note: `content` on request, `body` on response
-  variables: string | null; // Stored as a JSON string
+  connectorType: string;
+  body: string;
+  variables: string | null;
   createdAt: string;
 }
 
@@ -156,11 +142,11 @@ export interface Pagination {
 
 export interface MessageLogResponse {
   id: string;
-  status: string; // Prisma's `MessageStatus` enum
+  status: string;
   recipient: string;
   externalMessageId: string | null;
   error: string | null;
-  timestamp: string; // ISO date string
+  timestamp: string;
   variables: Record<string, any> | null;
   sentAt: string | null;
   deliveredAt: string | null;
@@ -171,7 +157,3 @@ export interface GetMessagesResponse {
   messages: MessageLogResponse[];
   pagination: Pagination;
 }
-
-// Re-export MessageStatus for convenience
-import type { MessageStatus } from './dataModels';
-export type { MessageStatus };

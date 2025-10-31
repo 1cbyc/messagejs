@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getApiKeys, getConnectors } from '@/lib/api';
 import { getApiKeys, getConnectors, getTemplates, deleteTemplate } from '@/lib/api';
 import { ApiKeyResponse, ConnectorResponse, TemplateResponse } from '@messagejs/shared-types';
 import { Button } from '@/components/ui/button';

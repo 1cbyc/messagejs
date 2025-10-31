@@ -14,8 +14,8 @@
     }
   },
   "scripts": {
-    "build": "rollup -c",
-    "dev": "rollup -c --watch",
+    "build": "rollup -c rollup.config.mjs",
+    "dev": "rollup -c rollup.config.mjs --watch",
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit"
   },
