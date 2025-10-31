@@ -8,7 +8,7 @@
 import { Request, Response } from 'express';
 import prisma from '../../lib/prisma';
 import logger from '../../lib/logger';
-import { GetProjectsResponse } from '@messagejs/shared-types';
+import { CreateProjectRequest, CreateProjectResponse, GetProjectsResponse } from '@messagejs/shared-types';
 
 /**
  * @controller listProjects
