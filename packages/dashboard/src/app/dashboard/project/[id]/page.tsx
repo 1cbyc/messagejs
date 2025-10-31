@@ -99,6 +99,11 @@ export default function ProjectDetailPage() {
       </header>
 
       <main className="p-8 mx-auto max-w-7xl">
+        <div className="mb-8">
+          <Link href={`/dashboard/project/${projectId}/logs`}>
+            <Button variant="outline">View Message Logs</Button>
+          </Link>
+        </div>
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold">API Keys</h2>
           <CreateApiKeyModal projectId={projectId} onSuccess={fetchData}>
