@@ -19,8 +19,6 @@ export const createProjectSchema = z.object({
     .string({
       required_error: 'Project name is required.',
     })
-    .min(3, { message: 'Project name must be at least 3 characters long.' }),
-  description: z
-    .string()
-    .optional(),
+    .min(3, { message: 'Project name must be at least 3 characters long.' })
+    .max(100, { message: 'Project name must be at most 100 characters long.' }),
 });
