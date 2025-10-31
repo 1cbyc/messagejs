@@ -60,7 +60,7 @@ npm install @messagejs/client
 ### Step 2: Initialize
 
 ```typescript
-import messagejs from '@messagejs/client';
+import { messagejs } from '@messagejs/client';
 
 messagejs.init({
   apiKey: 'sk_live_your_api_key',
@@ -83,8 +83,8 @@ console.log('Message sent:', result.id);
 ## Supported Platforms
 
 - ✅ **WhatsApp** - Via Cloud API
-- ✅ **Telegram** - Via Bot API
 - ✅ **SMS** - Via Twilio
+- 🔜 **Telegram** - Via Bot API (coming soon)
 - 🔜 More coming soon
 
 ## Security
