@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getApiKeys, createApiKey } from '@/lib/api';
-import { ApiKeyResponse } from '@messagejs/shared-types';
+import { getApiKeys, createApiKey, getConnectors } from '@/lib/api';
+import { ApiKeyResponse, ConnectorResponse } from '@messagejs/shared-types';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { CreateApiKeyModal } from '@/components/dashboard/CreateApiKeyModal';
@@ -15,14 +15,19 @@ export default function ProjectDetailPage() {
   const { id: projectId } = params as { id: string };
 
   const [apiKeys, setApiKeys] = useState<ApiKeyResponse[]>([]);
+  const [connectors, setConnectors] = useState<ConnectorResponse[]>([]);
   const [projectName, setProjectName] = useState<string>('Loading...'); // Placeholder for project name
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchKeys = async () => {
     try {
-      const response = await getApiKeys(projectId);
-      setApiKeys(response.apiKeys);
+      const [apiKeysResponse, connectorsResponse] = await Promise.all([
+        getApiKeys(projectId),
+        getConnectors(projectId),
+      ]);
+      setApiKeys(apiKeysResponse.apiKeys);
+      setConnectors(connectorsResponse.connectors);
     } catch (err: any) {
       if (err.message.includes('Authentication token not found')) {
         router.push('/login');
@@ -112,6 +117,43 @@ export default function ProjectDetailPage() {
             <h3 className="text-lg font-semibold">No API Keys Found</h3>
             <p className="mt-2 text-gray-400">
               Get started by creating your first API key to use with the SDK.
+            </p>
+          </div>
+        )}
+
+        <div className="mt-12 mb-6 flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Connectors</h2>
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Connector
+          </Button>
+        </div>
+
+        {connectors.length > 0 ? (
+          <div className="overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
+            <ul className="divide-y divide-gray-700">
+              {connectors.map((connector) => (
+                <li key={connector.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-700/50">
+                  <div>
+                    <p className="font-semibold text-sm text-gray-300 capitalize">{connector.type}</p>
+                    <p className="text-xs text-gray-500">
+                      Created on {new Date(connector.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div>
+                    <Button variant="destructive" size="sm">
+                      Delete
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <div className="rounded-lg border-2 border-dashed border-gray-700 bg-gray-800/50 p-12 text-center">
+            <h3 className="text-lg font-semibold">No Connectors Found</h3>
+            <p className="mt-2 text-gray-400">
+              Add a connector to start sending messages from this project.
             </p>
           </div>
         )}
