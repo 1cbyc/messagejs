@@ -39,20 +39,35 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
   : [];
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 app.use(
   cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
-      if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
+      
+      // In development, allow all origins; in production, check allowedOrigins
+      if (isDevelopment) {
+        return callback(null, true);
       }
+      
+      // In production, only allow explicitly listed origins
+      if (allowedOrigins.length > 0) {
+        if (allowedOrigins.includes(origin)) {
+          return callback(null, true);
+        } else {
+          return callback(new Error(`Origin ${origin} is not allowed by CORS`));
+        }
+      }
+      
+      // If no origins are configured in production, deny by default for security
+      callback(new Error('CORS: ALLOWED_ORIGINS must be configured in production'));
     },
     credentials: true, // Allow cookies to be sent
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key'],
+    exposedHeaders: ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'Retry-After'],
   }),
 );
 
