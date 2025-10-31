@@ -38,16 +38,7 @@ export const listProjects = async (
       },
     });
 
-    // The shared-types definition expects dates to be strings for API serialization.
-    // We map the Date objects to ISO strings.
-    const projectsForApi = projects.map(p => ({
-      ...p,
-      createdAt: p.createdAt.toISOString(),
-      // Ensure any other date fields are also converted
-    }));
-
-
-    return res.status(200).json({ projects: projectsForApi });
+    return res.status(200).json({ projects });
   } catch (error) {
     logger.error(
       { err: error, userId },
@@ -69,25 +60,3 @@ export const listProjects = async (
  * @route POST /api/v1/projects
  * @access Private (requires JWT authentication)
  */
-export const createProject = async (req: Request, res: Response) => {
-  // TODO: Implement project creation logic
-  // 1. Validate request body (name, description)
-  // 2. Use prisma.project.create with req.user!.id
-  // 3. Return 201 Created with the new project
-  res.status(501).json({ message: 'Not Implemented' });
-};
-
-// --- Placeholder for Get Project By ID ---
-/**
- * @controller getProjectById
- * @description Fetches a single project by its ID.
- * @route GET /api/v1/projects/:id
- * @access Private (requires JWT authentication and ownership check)
- */
-export const getProjectById = async (req: Request, res: Response) => {
-  // TODO: Implement logic to fetch a single project
-  // 1. Get project ID from req.params.id
-  // 2. Use prisma.project.findFirst with where: { id, userId: req.user!.id }
-  // 3. Return 404 if not found, otherwise return 200 with the project
-  res.status(501).json({ message: 'Not Implemented' });
-};
