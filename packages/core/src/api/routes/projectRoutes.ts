@@ -14,6 +14,7 @@ import { validate } from '../middleware/validationMiddleware';
 import { createProjectSchema } from '../validation/projectValidation';
 import apiKeyRouter from './apiKeyRoutes';
 import connectorRouter from './connectorRoutes';
+import templateRouter from './templateRoutes';
 
 // Create a new Express router instance.
 const projectRouter = Router();
@@ -50,5 +51,8 @@ projectRouter.use('/:projectId/keys', apiKeyRouter);
 
 // Mount the connectorRouter to handle all routes starting with /:projectId/connectors
 projectRouter.use('/:projectId/connectors', connectorRouter);
+
+// Mount the templateRouter to handle all routes starting with /:projectId/templates
+projectRouter.use('/:projectId/templates', templateRouter);
 
 export default projectRouter;
