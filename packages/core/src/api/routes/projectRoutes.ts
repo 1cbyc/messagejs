@@ -4,8 +4,16 @@
  */
 
 import { Router } from 'express';
-import { listProjects } from '../controllers/projectController';
+import {
+  listProjects,
+  createProject,
+  getProjectById,
+} from '../controllers/projectController';
 import { jwtAuthMiddleware } from '../middleware/jwtAuthMiddleware';
+import { validate } from '../middleware/validationMiddleware';
+import { createProjectSchema } from '../validation/projectValidation';
+import { validate } from '../middleware/validationMiddleware';
+import { createProjectSchema } from '../validation/projectValidation';
 
 // Create a new Express router instance.
 const projectRouter = Router();
@@ -17,5 +25,11 @@ const projectRouter = Router();
  */
 projectRouter.get('/', jwtAuthMiddleware, listProjects);
 
-export default projectRouter;
+/**
+ * @route   POST /
+ * @desc    Creates a new project for the authenticated user.
+ * @access  Private (requires JWT authentication)
+ */
+projectRouter.post('/', jwtAuthMiddleware, validate(createProjectSchema), createProject);
 
+export default projectRouter;
