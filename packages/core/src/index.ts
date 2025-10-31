@@ -6,11 +6,13 @@
 
 import express, { Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
+import { spawn } from 'child_process';
 import messageRouter from './api/routes/messageRoutes';
 import webhookRouter from './api/routes/webhookRoutes';
 import healthRouter from './api/routes/healthRoutes';
 import authRouter from './api/routes/authRoutes';
 import metricsRouter from './api/routes/metricsRoutes';
+import projectRouter from './api/routes/projectRoutes';
 import logger, { httpLogger } from './lib/logger';
 
 // Load environment variables from a .env file into process.env
@@ -53,6 +55,9 @@ app.use('/api/v1/webhooks', webhookRouter);
 // Mount the auth router for all requests to /api/v1/auth.
 app.use('/api/v1/auth', authRouter);
 
+// Mount the project router for all requests to /api/v1/projects.
+app.use('/api/v1/projects', projectRouter);
+
 // --- Error Handling ---
 // Generic error handler to catch any other errors
 app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
@@ -70,6 +75,27 @@ app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
 // Start the Express server and listen for incoming connections on the specified port.
 app.listen(PORT, () => {
   logger.info({ port: PORT }, 'MessageJS Core API started successfully');
+  
+  // Start the message worker as a child process for free tier compatibility
+  // This allows us to run both API and worker in a single Render service
+  const workerProcess = spawn('node', ['dist/queues/messageWorker.js'], {
+    stdio: 'inherit',
+    env: process.env,
+  });
+  
+  workerProcess.on('error', (err) => {
+    logger.error({ err }, 'Failed to start message worker');
+  });
+  
+  workerProcess.on('exit', (code) => {
+    logger.warn({ code }, 'Message worker process exited');
+  });
+  
+  // Graceful shutdown - kill worker when API shuts down
+  process.on('SIGTERM', () => {
+    logger.info('SIGTERM received, shutting down worker...');
+    workerProcess.kill();
+  });
 });
 
 /**

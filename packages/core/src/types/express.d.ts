@@ -10,5 +10,10 @@ declare module 'express-serve-static-core' {
       projectId: string;
       rateLimit: number;
     };
+    // Add the user property for JWT authenticated routes
+    user?: {
+      id: string;
+      email: string;
+    };
   }
 }
