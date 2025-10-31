@@ -8,9 +8,11 @@
 
 import {
   ApiErrorResponse,
+  CreateConnectorRequest,
   CreateProjectRequest,
   CreateProjectResponse,
   GetApiKeysResponse,
+  GetConnectorsResponse,
   GetProjectsResponse,
   LoginRequest,
   LoginResponse,
@@ -190,6 +192,66 @@ export const deleteApiKey = (
   }
 
   return apiFetch<void>(`/projects/${projectId}/keys/${keyId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
+
+/**
+ * Fetches the list of connectors for a specific project.
+ */
+export const getConnectors = (
+  projectId: string,
+): Promise<GetConnectorsResponse> => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    return Promise.reject(new Error('Authentication token not found.'));
+  }
+
+  return apiFetch<GetConnectorsResponse>(`/projects/${projectId}/connectors`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
+
+/**
+ * Creates a new connector for a specific project.
+ */
+export const createConnector = (
+  projectId: string,
+  connectorData: CreateConnectorRequest,
+): Promise<void> => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    return Promise.reject(new Error('Authentication token not found.'));
+  }
+
+  return apiFetch<void>(`/projects/${projectId}/connectors`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(connectorData),
+  });
+};
+
+/**
+ * Deletes a connector from a project.
+ */
+export const deleteConnector = (
+  projectId: string,
+  connectorId: string,
+): Promise<void> => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    return Promise.reject(new Error('Authentication token not found.'));
+  }
+
+  return apiFetch<void>(`/projects/${projectId}/connectors/${connectorId}`, {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${token}`,
