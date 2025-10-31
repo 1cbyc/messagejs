@@ -102,6 +102,28 @@ export interface GetConnectorsResponse {
   connectors: ConnectorResponse[];
 }
 
+// --- Template Management API ---
+
+export interface CreateTemplateRequest {
+  name: string;
+  content: string;
+  variables?: string[];
+  connectorType: ConnectorType;
+}
+
+export interface TemplateResponse {
+  id: string;
+  name: string;
+  connectorType: string; // Prisma's `ServiceType` enum
+  body: string; // Note: `content` on request, `body` on response
+  variables: string | null; // Stored as a JSON string
+  createdAt: string;
+}
+
+export interface GetTemplatesResponse {
+  templates: TemplateResponse[];
+}
+
 // Re-export MessageStatus for convenience
 import type { MessageStatus } from './dataModels';
 export type { MessageStatus };
