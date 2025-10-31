@@ -13,6 +13,7 @@ import healthRouter from './api/routes/healthRoutes';
 import authRouter from './api/routes/authRoutes';
 import metricsRouter from './api/routes/metricsRoutes';
 import projectRouter from './api/routes/projectRoutes';
+import internalRouter from './api/routes/internalRoutes';
 import logger, { httpLogger } from './lib/logger';
 
 // Load environment variables from a .env file into process.env
@@ -57,6 +58,9 @@ app.use('/api/v1/auth', authRouter);
 
 // Mount the project router for all requests to /api/v1/projects.
 app.use('/api/v1/projects', projectRouter);
+
+// Mount the internal router for operational tasks.
+app.use('/api/v1/internal', internalRouter);
 
 // --- Error Handling ---
 // Generic error handler to catch any other errors
