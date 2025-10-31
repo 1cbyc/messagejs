@@ -178,7 +178,7 @@ export default function HomePage() {
 npm install @messagejs/client
 
 // 2. Initialize
-import messagejs from '@messagejs/client';
+import { messagejs } from '@messagejs/client';
 
 messagejs.init({
   apiKey: 'sk_live_your_api_key',
