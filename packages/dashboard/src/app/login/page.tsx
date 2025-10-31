@@ -52,8 +52,7 @@ function LoginForm() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-900 text-white">
       <div className="w-full max-w-md rounded-lg bg-gray-800 p-8 shadow-2xl">
         <div className="mb-8 text-center">
-          {/* You can replace this with a proper logo component */}
-          <div className="mb-4 inline-block rounded-lg bg-gray-700 p-3">
+          <Link href="https://messagejs.pro" className="mb-4 inline-block rounded-lg bg-gray-700 p-3 transition-colors hover:bg-gray-600">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"
@@ -70,7 +69,7 @@ function LoginForm() {
               <path d="M21 12.1H3" />
               <path d="M15.1 18.1H3" />
             </svg>
-          </div>
+          </Link>
           <h1 className="text-3xl font-bold tracking-tight">
             Sign in to MessageJS
           </h1>

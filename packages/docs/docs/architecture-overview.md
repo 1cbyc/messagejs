@@ -88,7 +88,7 @@ A lightweight TypeScript library for frontend applications.
 
 **Features:**
 - Simple API: `init()` and `sendMessage()`
-- < 20KB gzipped
+- Less than 20KB gzipped
 - Full TypeScript support
 - Error handling and retries
 
