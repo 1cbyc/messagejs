@@ -83,6 +83,25 @@ export interface GetProjectsResponse {
   projects: Project[];
 }
 
+// --- Connector Management API ---
+
+import { ConnectorType } from './dataModels';
+
+export interface CreateConnectorRequest {
+  type: ConnectorType;
+  credentials: Record<string, any>;
+}
+
+export interface ConnectorResponse {
+  id: string;
+  type: string; // Prisma enum will be a string here
+  createdAt: string;
+}
+
+export interface GetConnectorsResponse {
+  connectors: ConnectorResponse[];
+}
+
 // Re-export MessageStatus for convenience
 import type { MessageStatus } from './dataModels';
 export type { MessageStatus };
