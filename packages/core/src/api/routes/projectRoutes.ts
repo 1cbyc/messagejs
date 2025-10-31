@@ -12,6 +12,8 @@ import {
 import { jwtAuthMiddleware } from '../middleware/jwtAuthMiddleware';
 import { validate } from '../middleware/validationMiddleware';
 import { createProjectSchema } from '../validation/projectValidation';
+import apiKeyRouter from './apiKeyRoutes';
+import connectorRouter from './connectorRoutes';
 
 // Create a new Express router instance.
 const projectRouter = Router();
@@ -41,8 +43,12 @@ projectRouter.post('/', validate(createProjectSchema), createProject);
  */
 projectRouter.get('/:id', getProjectById);
 
-// Routes for updating and deleting projects can be added here in the future.
-// e.g., projectRouter.put('/:id', validate(updateProjectSchema), updateProject);
-// e.g., projectRouter.delete('/:id', deleteProject);
+// --- Nested Routes ---
+
+// Mount the apiKeyRouter to handle all routes starting with /:projectId/keys
+projectRouter.use('/:projectId/keys', apiKeyRouter);
+
+// Mount the connectorRouter to handle all routes starting with /:projectId/connectors
+projectRouter.use('/:projectId/connectors', connectorRouter);
 
 export default projectRouter;
