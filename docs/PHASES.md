@@ -71,9 +71,9 @@ Build SendGrid for chat apps - enable developers to send messages via WhatsApp, 
 
 ### Features Required
 1. **Authentication**
-   - [ ] User registration page
-   - [ ] Login page
-   - [ ] JWT-based session management
+   - [x] User registration page (UI + API)
+   - [x] Login page (UI + API)
+   - [x] JWT-based session management (initial implementation)
    - [ ] Password reset flow
    - [ ] Email verification (optional)
 
@@ -83,7 +83,7 @@ Build SendGrid for chat apps - enable developers to send messages via WhatsApp, 
    - [ ] Quick actions
 
 3. **Project Management**
-   - [ ] List projects view
+   - [x] List projects view (UI + API)
    - [ ] Create new project form
    - [ ] Edit project details
    - [ ] Delete project with confirmation
@@ -300,16 +300,27 @@ Build SendGrid for chat apps - enable developers to send messages via WhatsApp, 
 
 ## 🎯 Next Immediate Steps
 
-### This Week
-1. **Start Phase 3 (Dashboard Frontend)**
-   - Set up Next.js dashboard structure
-   - Implement authentication pages
-   - Create basic dashboard layout
+### This Week: Achieve "Aha!" Moment (Get an API Key)
+1. **Complete Project Management in Dashboard**
+   - [ ] Build "Create Project" modal/form UI.
+   - [ ] Wire UI to the existing `POST /api/v1/projects` endpoint.
 
-### Next Month
-1. Complete dashboard MVP
-2. Add Telegram connector
-3. Write tests for core functionality
+2. **Implement API Key Management (Full Stack)**
+   - [ ] **Backend:** Build API endpoints for `POST`, `GET`, `DELETE` on `/api/v1/projects/:projectId/keys`.
+   - [ ] **Frontend:** On the project detail page, build the UI to list, create, and delete API keys.
+
+### Next Week: Enable First Message Sent
+3. **Implement Connector Management (Full Stack)**
+   - [ ] **Backend:** Build API endpoints for managing Connectors (e.g., WhatsApp, Twilio credentials).
+   - [ ] **Frontend:** Build the UI to add and manage credentials for connectors.
+
+4. **Implement Template Management (Full Stack)**
+   - [ ] **Backend:** Build API endpoints for CRUD operations on message templates.
+   - [ ] **Frontend:** Build a simple UI for creating and managing message templates.
+
+### Ongoing Housekeeping
+- **Enhance Security:** Refactor auth to use http-only cookies instead of `localStorage`.
+- **Update Documentation:** Keep `API_REFERENCE.md` and `openapi.yaml` in sync as new endpoints are built.
 
 ---
 
@@ -320,7 +331,7 @@ Build SendGrid for chat apps - enable developers to send messages via WhatsApp, 
 | Phase 0: Foundation | ✅ Complete | 100% |
 | Phase 1: Core Backend | ✅ Complete | 100% |
 | Phase 2: Marketing Website | ✅ Complete | 100% |
-| Phase 3: Dashboard | ⏳ Not Started | 0% |
+| Phase 3: Dashboard | 🚧 Partial | 30% |
 | Phase 4: Connectors | ⏳ Not Started | 20% (WhatsApp only) |
 | Phase 5: SDK | 🚧 Partial | 50% |
 | Phase 6: Testing | ⏳ Not Started | 0% |

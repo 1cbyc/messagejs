@@ -10,5 +10,9 @@ declare module 'express-serve-static-core' {
       projectId: string;
       rateLimit: number;
     };
+    user?: {
+      id: string;
+      email: string;
+    };
   }
 }

@@ -1,29 +1,96 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { getProjects } from '../lib/api';
+import { Project } from '@messagejs/shared-types';
 import { Button } from '@/components/ui/button';
+import { CreateProjectModal } from '@/components/dashboard/CreateProjectModal';
 
-export default function Home() {
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-xl">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">MessageJS</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            SendGrid, but for chat apps
-          </p>
-        </div>
+export default function DashboardPage() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
-        <div className="space-y-4">
-          <Button className="w-full" size="lg">
-            Get Started
-          </Button>
-          <Button variant="outline" className="w-full" size="lg">
-            Sign In
-          </Button>
-        </div>
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await getProjects();
+        setProjects(response.projects);
+      } catch (err: any) {
+        if (err.message.includes('Authentication token not found')) {
+          router.push('/login');
+        } else {
+          setError(err.message || 'Failed to fetch projects.');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-        <div className="text-center text-sm text-gray-500">
-          <p>Send messages via WhatsApp, Telegram, SMS, and more</p>
+    fetchProjects();
+  }, [router]);
+
+  const handleProjectCreated = (newProject: Project) => {
+    // Add the new project to the top of the list for a real-time feel
+    setProjects((prevProjects) => [newProject, ...prevProjects]);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-900 text-white">
+        <p>Loading dashboard...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-900 text-white">
+        <div className="rounded-md bg-red-900/50 p-4 text-center text-red-300">
+          <p>Error:</p>
+          <p>{error}</p>
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-white">
+      <header className="bg-gray-800 p-4 shadow-md">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+      </header>
+      <main className="p-8">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Your Projects</h2>
+          <CreateProjectModal onSuccess={handleProjectCreated}>
+            <Button>Create Project</Button>
+          </CreateProjectModal>
+        </div>
+        {projects.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {projects.map((project) => (
+              <Link
+                key={project.id}
+                href={`/dashboard/project/${project.id}`}
+                className="block rounded-lg bg-gray-800 p-4 transition-transform hover:scale-[1.02] hover:bg-gray-700"
+              >
+                <h3 className="font-bold truncate">{project.name}</h3>
+                <p className="text-sm text-gray-400 font-mono truncate">{project.id}</p>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-lg border-2 border-dashed border-gray-700 bg-gray-800/50 p-12 text-center">
+            <h3 className="text-lg font-semibold">No projects yet</h3>
+            <p className="mt-2 text-gray-400">
+              Get started by creating your first project.
+            </p>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

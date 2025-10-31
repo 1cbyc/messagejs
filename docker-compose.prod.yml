@@ -1,0 +1,99 @@
+version: '3.8'
+
+# Production Docker Compose configuration for MessageJS Core API
+# This file can be used for self-hosted deployments
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: messagejs_postgres_prod
+    environment:
+      POSTGRES_USER: messagejs
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: messagejs_prod
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - messagejs_network
+
+  # Redis Cache & Queue
+  redis:
+    image: redis:7-alpine
+    container_name: messagejs_redis_prod
+    command: redis-server --requirepass ${REDIS_PASSWORD:-changeme}
+    volumes:
+      - redis_data:/data
+    restart: always
+    networks:
+      - messagejs_network
+
+  # Core API
+  api:
+    build:
+      context: .
+      dockerfile: packages/core/Dockerfile
+    container_name: messagejs_api_prod
+    environment:
+      # Database
+      DATABASE_URL: postgresql://messagejs:${POSTGRES_PASSWORD:-changeme}@postgres:5432/messagejs_prod
+      # Redis
+      REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379
+      # Secrets (MUST be set in production!)
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+      # Environment
+      NODE_ENV: production
+      PORT: 3001
+      # Optional settings
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DEFAULT_RATE_LIMIT: ${DEFAULT_RATE_LIMIT:-1000}
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-5}
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+      - redis
+    restart: always
+    networks:
+      - messagejs_network
+
+  # Worker Process
+  worker:
+    build:
+      context: .
+      dockerfile: packages/core/Dockerfile
+    container_name: messagejs_worker_prod
+    environment:
+      # Database
+      DATABASE_URL: postgresql://messagejs:${POSTGRES_PASSWORD:-changeme}@postgres:5432/messagejs_prod
+      # Redis
+      REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379
+      # Secrets
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+      # Environment
+      NODE_ENV: production
+      # Worker settings
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-5}
+      WORKER_RATE_LIMIT_MAX: ${WORKER_RATE_LIMIT_MAX:-10}
+      WORKER_RATE_LIMIT_DURATION: ${WORKER_RATE_LIMIT_DURATION:-1000}
+    command: node dist/queues/messageWorker.js
+    depends_on:
+      - postgres
+      - redis
+    restart: always
+    networks:
+      - messagejs_network
+
+networks:
+  messagejs_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+

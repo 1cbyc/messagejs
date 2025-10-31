@@ -11,6 +11,7 @@ import webhookRouter from './api/routes/webhookRoutes';
 import healthRouter from './api/routes/healthRoutes';
 import authRouter from './api/routes/authRoutes';
 import metricsRouter from './api/routes/metricsRoutes';
+import projectRouter from './api/routes/projectRoutes';
 import logger, { httpLogger } from './lib/logger';
 
 // Load environment variables from a .env file into process.env
@@ -52,6 +53,9 @@ app.use('/api/v1/webhooks', webhookRouter);
 
 // Mount the auth router for all requests to /api/v1/auth.
 app.use('/api/v1/auth', authRouter);
+
+// Mount the project router for all requests to /api/v1/projects.
+app.use('/api/v1/projects', projectRouter);
 
 // --- Error Handling ---
 // Generic error handler to catch any other errors
