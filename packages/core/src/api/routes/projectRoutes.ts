@@ -15,6 +15,7 @@ import { createProjectSchema } from '../validation/projectValidation';
 import apiKeyRouter from './apiKeyRoutes';
 import connectorRouter from './connectorRoutes';
 import templateRouter from './templateRoutes';
+import analyticsRouter from './analyticsRoutes';
 
 // Create a new Express router instance.
 const projectRouter = Router();
@@ -54,5 +55,8 @@ projectRouter.use('/:projectId/connectors', connectorRouter);
 
 // Mount the templateRouter to handle all routes starting with /:projectId/templates
 projectRouter.use('/:projectId/templates', templateRouter);
+
+// Mount the analyticsRouter to handle all routes starting with /:projectId/analytics
+projectRouter.use('/:projectId/analytics', analyticsRouter);
 
 export default projectRouter;

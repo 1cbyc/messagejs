@@ -4,8 +4,9 @@
  */
 
 import { Router } from 'express';
-import { sendMessage } from '../controllers/messageController';
+import { sendMessage, listMessages } from '../controllers/messageController';
 import { validateApiKey } from '../middleware/authMiddleware';
+import { jwtAuthMiddleware } from '../middleware/jwtAuthMiddleware';
 import { rateLimitMiddleware } from '../middleware/rateLimitMiddleware';
 import { validate } from '../middleware/validationMiddleware';
 import { sendMessageSchema } from '../validation/messageValidation';
@@ -26,5 +27,13 @@ messageRouter.post(
   validate(sendMessageSchema),
   sendMessage,
 );
+
+/**
+ * @route   GET /
+ * @desc    Fetches a paginated list of message logs for a specific project.
+ *          This endpoint is for the dashboard and requires JWT authentication.
+ * @access  Private (via JWT)
+ */
+messageRouter.get('/', jwtAuthMiddleware, listMessages);
 
 export default messageRouter;

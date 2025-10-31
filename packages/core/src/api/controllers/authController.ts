@@ -23,6 +23,9 @@ if (!JWT_SECRET) {
 }
 
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN ?? '7d'; // Token expiration time (default: 7 days)
+const COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? 'authToken'; // Cookie name for JWT
+const COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds (matches JWT_EXPIRES_IN default)
+const isProduction = process.env.NODE_ENV === 'production';
 
 /**
  * Generates a JSON Web Token for a given user.
@@ -34,6 +37,34 @@ const generateToken = (userId: string, email: string): string => {
   const payload = { userId, email };
   const options = { expiresIn: JWT_EXPIRES_IN as StringValue | number };
   return jwt.sign(payload, JWT_SECRET as string, options);
+};
+
+/**
+ * Sets an http-only cookie with the JWT token.
+ * @param res - Express response object.
+ * @param token - The JWT token to set in the cookie.
+ */
+const setAuthCookie = (res: Response, token: string): void => {
+  res.cookie(COOKIE_NAME, token, {
+    httpOnly: true, // Prevents JavaScript access (protects against XSS)
+    secure: isProduction, // Only send over HTTPS in production
+    sameSite: 'lax', // CSRF protection (allows same-site requests)
+    maxAge: COOKIE_MAX_AGE, // Cookie expiration
+    path: '/', // Available to all paths
+  });
+};
+
+/**
+ * Clears the authentication cookie.
+ * @param res - Express response object.
+ */
+const clearAuthCookie = (res: Response): void => {
+  res.clearCookie(COOKIE_NAME, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: 'lax',
+    path: '/',
+  });
 };
 
 /**
@@ -75,14 +106,16 @@ export const register = async (
     // 4. Generate a JWT for the new user
     const token = generateToken(user.id, user.email);
 
-    // 5. Send the successful response
+    // 5. Set http-only cookie with the token
+    setAuthCookie(res, token);
+
+    // 6. Send the successful response (token is in http-only cookie, not in response body)
     return res.status(201).json({
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
       },
-      token,
     });
   } catch (error: any) {
     // Check for Prisma's unique constraint violation error
@@ -137,14 +170,16 @@ export const login = async (
     // 3. Generate a JWT for the authenticated user
     const token = generateToken(user.id, user.email);
 
-    // 4. Send the successful response
+    // 4. Set http-only cookie with the token
+    setAuthCookie(res, token);
+
+    // 5. Send the successful response (token is in http-only cookie, not in response body)
     return res.status(200).json({
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
       },
-      token,
     });
   } catch (error) {
     logger.error({ err: error }, 'Error during user login.');
@@ -152,6 +187,33 @@ export const login = async (
       error: {
         code: 'INTERNAL_SERVER_ERROR',
         message: 'An unexpected error occurred during login.',
+      },
+    });
+  }
+};
+
+/**
+ * @controller logout
+ * @description Handles user logout by clearing the authentication cookie.
+ * @route POST /api/v1/auth/logout
+ */
+export const logout = async (
+  _req: Request,
+  res: Response<{ message: string } | ApiErrorResponse>,
+) => {
+  try {
+    // Clear the http-only cookie
+    clearAuthCookie(res);
+
+    return res.status(200).json({
+      message: 'Logged out successfully',
+    });
+  } catch (error) {
+    logger.error({ err: error }, 'Error during user logout.');
+    return res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred during logout.',
       },
     });
   }

@@ -13,6 +13,7 @@ import prisma from '../../lib/prisma';
 
 // Secret key for JWT verification from environment variables.
 const JWT_SECRET = process.env.JWT_SECRET;
+const COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? 'authToken'; // Cookie name for JWT
 
 /**
  * Defines the shape of the decoded JWT payload that we expect.
@@ -60,18 +61,26 @@ export const jwtAuthMiddleware = async (
     });
   }
 
-  const authHeader = req.headers.authorization;
+  // Try to get token from http-only cookie first (preferred method)
+  // Fall back to Authorization header for backward compatibility during transition
+  let token: string | undefined = req.cookies?.[COOKIE_NAME];
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  // If not in cookie, check Authorization header
+  if (!token) {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    }
+  }
+
+  if (!token) {
     return res.status(401).json({
       error: {
         code: 'AUTH_MISSING_TOKEN',
-        message: 'Authentication token is missing or improperly formatted.',
+        message: 'Authentication token is missing. Please log in again.',
       },
     });
   }
-
-  const token = authHeader.split(' ')[1];
 
   try {
     // Verify the token and decode its payload.

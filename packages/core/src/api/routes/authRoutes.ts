@@ -4,7 +4,7 @@
  */
 
 import { Router } from 'express';
-import { register, login } from '../controllers/authController';
+import { register, login, logout } from '../controllers/authController';
 import { validate } from '../middleware/validationMiddleware';
 import { registerSchema, loginSchema } from '../validation/authValidation';
 import { authRateLimitMiddleware } from '../middleware/authRateLimitMiddleware';
@@ -25,5 +25,12 @@ authRouter.post('/register', authRateLimitMiddleware, validate(registerSchema), 
  * @access  Public
  */
 authRouter.post('/login', authRateLimitMiddleware, validate(loginSchema), login);
+
+/**
+ * @route   POST /logout
+ * @desc    Handles user logout by clearing the authentication cookie.
+ * @access  Public (no auth required to logout)
+ */
+authRouter.post('/logout', logout);
 
 export default authRouter;

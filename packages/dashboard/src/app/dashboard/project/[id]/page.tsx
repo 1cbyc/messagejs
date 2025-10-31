@@ -98,7 +98,10 @@ export default function ProjectDetailPage() {
       </header>
 
       <main className="p-8 mx-auto max-w-7xl">
-        <div className="mb-8">
+        <div className="mb-8 flex gap-4">
+          <Link href={`/dashboard/project/${projectId}/stats`}>
+            <Button variant="outline">View Analytics</Button>
+          </Link>
           <Link href={`/dashboard/project/${projectId}/logs`}>
             <Button variant="outline">View Message Logs</Button>
           </Link>

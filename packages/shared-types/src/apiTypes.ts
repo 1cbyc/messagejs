@@ -62,7 +62,8 @@ export interface AuthSuccessResponse {
     email: string;
     name: string | null;
   };
-  token: string;
+  // token is optional - it's now stored in http-only cookie instead of response body
+  token?: string;
 }
 
 export type RegisterResponse = AuthSuccessResponse; // Success only, errors are thrown
@@ -156,4 +157,27 @@ export interface MessageLogResponse {
 export interface GetMessagesResponse {
   messages: MessageLogResponse[];
   pagination: Pagination;
+}
+
+// --- Analytics API ---
+
+export interface ProjectStatsResponse {
+  totalMessages: number;
+  statusCounts: {
+    queued: number;
+    sent: number;
+    delivered: number;
+    failed: number;
+    undelivered: number;
+  };
+  successRate: number; // Percentage (0-100)
+  deliveryRate: number; // Percentage (0-100)
+  timeSeries: Array<{
+    date: string; // YYYY-MM-DD
+    total: number;
+    sent: number;
+    delivered: number;
+    failed: number;
+  }>;
+  connectorDistribution: Record<string, number>; // connectorType -> count
 }

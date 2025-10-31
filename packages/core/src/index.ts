@@ -6,6 +6,8 @@
 
 import express, { Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import { spawn } from 'child_process';
 import messageRouter from './api/routes/messageRoutes';
 import webhookRouter from './api/routes/webhookRoutes';
@@ -14,6 +16,7 @@ import authRouter from './api/routes/authRoutes';
 import metricsRouter from './api/routes/metricsRoutes';
 import projectRouter from './api/routes/projectRoutes';
 import internalRouter from './api/routes/internalRoutes';
+import docsRouter from './api/routes/docsRoutes';
 import logger, { httpLogger } from './lib/logger';
 
 // Load environment variables from a .env file into process.env
@@ -30,6 +33,31 @@ const PORT = process.env.PORT ?? 3001;
 
 // Trust proxy for accurate IP address detection (important for rate limiting)
 app.set('trust proxy', true);
+
+// Configure CORS to allow credentials (needed for http-only cookies)
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+  : [];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true, // Allow cookies to be sent
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key'],
+  }),
+);
+
+// Enable parsing of cookies (needed for http-only cookie authentication)
+app.use(cookieParser());
 
 // Enable parsing of JSON request bodies.
 // This is essential for our REST API to accept JSON payloads.
@@ -54,6 +82,7 @@ app.use('/api/v1/messages', messageRouter);
 app.use('/api/v1/webhooks', webhookRouter);
 
 // Mount the auth router for all requests to /api/v1/auth.
+// Configure CORS to allow credentials (cookies) for auth endpoints
 app.use('/api/v1/auth', authRouter);
 
 // Mount the project router for all requests to /api/v1/projects.
@@ -61,6 +90,9 @@ app.use('/api/v1/projects', projectRouter);
 
 // Mount the internal router for operational tasks.
 app.use('/api/v1/internal', internalRouter);
+
+// Mount the API documentation router (Swagger UI).
+app.use('/api-docs', docsRouter);
 
 // --- Error Handling ---
 // Generic error handler to catch any other errors

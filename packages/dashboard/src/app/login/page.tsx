@@ -31,15 +31,13 @@ function LoginForm() {
     try {
       const response = await loginUser({ email, password });
 
-      // TODO: Replace localStorage with http-only cookies for improved security.
-      // The current implementation is vulnerable to XSS attacks. This requires a backend
-      // change to set the cookie upon login.
-      if ('token' in response) {
-        localStorage.setItem('authToken', response.token);
+      // Authentication token is now stored in an http-only cookie by the backend
+      // No need to manually store it - it's automatically included in subsequent requests
+      if ('user' in response) {
         router.push('/dashboard');
       } else {
         // This case should ideally not be hit if our apiFetch function throws correctly.
-        throw new Error(response.error.message || 'An unknown error occurred.');
+        throw new Error((response as any).error?.message || 'An unknown error occurred.');
       }
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred during login.');

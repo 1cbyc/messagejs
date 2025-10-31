@@ -22,12 +22,14 @@ import {
   GetTemplatesResponse,
   TemplateResponse,
   GetMessagesResponse,
+  ProjectStatsResponse,
 } from '@messagejs/shared-types';
 
-// The base URL for the API. It defaults to the local development server,
-// but can be overridden by an environment variable for production.
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1';
+// The base URL for the API. Must be set via NEXT_PUBLIC_API_URL environment variable.
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+if (!API_BASE_URL) {
+  throw new Error('NEXT_PUBLIC_API_URL environment variable is required');
+}
 
 /**
  * A generic and reusable fetch wrapper for the MessageJS API.
@@ -44,6 +46,7 @@ async function apiFetch<T>(
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
+      credentials: 'include', // Include cookies (http-only auth token) in requests
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
@@ -74,9 +77,10 @@ async function apiFetch<T>(
 
 /**
  * Registers a new user account.
+ * Authentication token is automatically set as http-only cookie by the backend.
  *
  * @param userData The data required for registration.
- * @returns A promise that resolves with the user and token information.
+ * @returns A promise that resolves with the user information.
  */
 export const registerUser = (
   userData: RegisterRequest,
@@ -89,9 +93,10 @@ export const registerUser = (
 
 /**
  * Logs in an existing user.
+ * Authentication token is automatically set as http-only cookie by the backend.
  *
  * @param credentials The user's email and password.
- * @returns A promise that resolves with the user and token information.
+ * @returns A promise that resolves with the user information.
  */
 export const loginUser = (
   credentials: LoginRequest,
@@ -103,23 +108,25 @@ export const loginUser = (
 };
 
 /**
+ * Logs out the current user by clearing the authentication cookie.
+ *
+ * @returns A promise that resolves when logout is complete.
+ */
+export const logoutUser = async (): Promise<void> => {
+  await apiFetch<{ message: string }>('/auth/logout', {
+    method: 'POST',
+  });
+};
+
+/**
  * Fetches the list of projects for the currently authenticated user.
  *
  * @returns A promise that resolves with the list of projects.
  */
 export const getProjects = (): Promise<GetProjectsResponse> => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    // If there's no token, we can't make an authenticated request.
-    // This will cause a redirect to the login page in the UI layer.
-    return Promise.reject(new Error('Authentication token not found.'));
-  }
-
+  // Authentication is handled via http-only cookie, no need to pass token manually
   return apiFetch<GetProjectsResponse>('/projects', {
     method: 'GET',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
   });
 };
 
@@ -132,16 +139,9 @@ export const getProjects = (): Promise<GetProjectsResponse> => {
 export const createProject = (
   projectData: CreateProjectRequest,
 ): Promise<CreateProjectResponse> => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    return Promise.reject(new Error('Authentication token not found.'));
-  }
-
+  // Authentication is handled via http-only cookie
   return apiFetch<CreateProjectResponse>('/projects', {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
     body: JSON.stringify(projectData),
   });
 };
@@ -150,16 +150,9 @@ export const createProject = (
  * Fetches the list of API keys for a specific project.
  */
 export const getApiKeys = (projectId: string): Promise<GetApiKeysResponse> => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    return Promise.reject(new Error('Authentication token not found.'));
-  }
-
+  // Authentication is handled via http-only cookie
   return apiFetch<GetApiKeysResponse>(`/projects/${projectId}/keys`, {
     method: 'GET',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
   });
 };
 
@@ -170,16 +163,9 @@ export const getApiKeys = (projectId: string): Promise<GetApiKeysResponse> => {
 export const createApiKey = (
   projectId: string,
 ): Promise<{ apiKey: string }> => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    return Promise.reject(new Error('Authentication token not found.'));
-  }
-
+  // Authentication is handled via http-only cookie
   return apiFetch<{ apiKey: string }>(`/projects/${projectId}/keys`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
   });
 };
 
@@ -190,16 +176,9 @@ export const deleteApiKey = (
   projectId: string,
   keyId: string,
 ): Promise<void> => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    return Promise.reject(new Error('Authentication token not found.'));
-  }
-
+  // Authentication is handled via http-only cookie
   return apiFetch<void>(`/projects/${projectId}/keys/${keyId}`, {
     method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
   });
 };
 
@@ -209,16 +188,9 @@ export const deleteApiKey = (
 export const getConnectors = (
   projectId: string,
 ): Promise<GetConnectorsResponse> => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    return Promise.reject(new Error('Authentication token not found.'));
-  }
-
+  // Authentication is handled via http-only cookie
   return apiFetch<GetConnectorsResponse>(`/projects/${projectId}/connectors`, {
     method: 'GET',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
   });
 };
 
@@ -229,16 +201,9 @@ export const createConnector = (
   projectId: string,
   connectorData: CreateConnectorRequest,
 ): Promise<void> => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    return Promise.reject(new Error('Authentication token not found.'));
-  }
-
+  // Authentication is handled via http-only cookie
   return apiFetch<void>(`/projects/${projectId}/connectors`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
     body: JSON.stringify(connectorData),
   });
 };
@@ -250,16 +215,9 @@ export const deleteConnector = (
   projectId: string,
   connectorId: string,
 ): Promise<void> => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    return Promise.reject(new Error('Authentication token not found.'));
-  }
-
+  // Authentication is handled via http-only cookie
   return apiFetch<void>(`/projects/${projectId}/connectors/${connectorId}`, {
     method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
   });
 };
 
@@ -269,16 +227,9 @@ export const deleteConnector = (
 export const getTemplates = (
   projectId: string,
 ): Promise<GetTemplatesResponse> => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    return Promise.reject(new Error('Authentication token not found.'));
-  }
-
+  // Authentication is handled via http-only cookie
   return apiFetch<GetTemplatesResponse>(`/projects/${projectId}/templates`, {
     method: 'GET',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
   });
 };
 
@@ -289,16 +240,9 @@ export const createTemplate = (
   projectId: string,
   templateData: CreateTemplateRequest,
 ): Promise<TemplateResponse> => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    return Promise.reject(new Error('Authentication token not found.'));
-  }
-
+  // Authentication is handled via http-only cookie
   return apiFetch<TemplateResponse>(`/projects/${projectId}/templates`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
     body: JSON.stringify(templateData),
   });
 };
@@ -310,16 +254,9 @@ export const deleteTemplate = (
   projectId: string,
   templateId: string,
 ): Promise<void> => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    return Promise.reject(new Error('Authentication token not found.'));
-  }
-
+  // Authentication is handled via http-only cookie
   return apiFetch<void>(`/projects/${projectId}/templates/${templateId}`, {
     method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
   });
 };
 
@@ -331,11 +268,7 @@ export const getMessages = (
   limit: number,
   offset: number,
 ): Promise<GetMessagesResponse> => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    return Promise.reject(new Error('Authentication token not found.'));
-  }
-
+  // Authentication is handled via http-only cookie
   const query = new URLSearchParams({
     projectId,
     limit: String(limit),
@@ -344,8 +277,17 @@ export const getMessages = (
 
   return apiFetch<GetMessagesResponse>(`/messages?${query}`, {
     method: 'GET',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+  });
+};
+
+/**
+ * Fetches analytics and statistics for a specific project.
+ */
+export const getProjectStats = (
+  projectId: string,
+): Promise<ProjectStatsResponse> => {
+  // Authentication is handled via http-only cookie
+  return apiFetch<ProjectStatsResponse>(`/projects/${projectId}/analytics`, {
+    method: 'GET',
   });
 };
