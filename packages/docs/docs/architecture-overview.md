@@ -44,9 +44,6 @@ MessageJS is built with a modular, scalable architecture that separates concerns
 │  ┌───────────▼────────────────────┐  │
 │  │  Connector Router              │  │
 │  │  - WhatsAppConnector           │  │
-│  │  - TelegramConnector           │  │
-│  │  - TwilioConnector             │  │
-│  │  - SMTPConnector               │  │
 │  └───────────┬────────────────────┘  │
 └──────────────┼─────────────────────────┘
                │
@@ -69,14 +66,10 @@ MessageJS is built with a modular, scalable architecture that separates concerns
 
 ┌─────────────────────────────────────────┐
 │         External APIs                   │
-│  ┌──────────┐  ┌──────────┐            │
-│  │ WhatsApp │  │ Telegram │            │
-│  │ Cloud API│  │ Bot API  │            │
-│  └──────────┘  └──────────┘            │
-│  ┌──────────┐  ┌──────────┐            │
-│  │  Twilio  │  │   SMTP   │            │
-│  │   SMS    │  │  Servers │            │
-│  └──────────┘  └──────────┘            │
+│  ┌──────────┐                          │
+│  │ WhatsApp │                          │
+│  │ Cloud API│                          │
+│  └──────────┘                          │
 └─────────────────────────────────────────┘
 ```
 
