@@ -24,7 +24,6 @@ interface CreateProjectModalProps {
 export function CreateProjectModal({ children, onSuccess }: CreateProjectModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -34,12 +33,11 @@ export function CreateProjectModal({ children, onSuccess }: CreateProjectModalPr
     setError(null);
 
     try {
-      const newProject = await createProject({ name, description });
+      const newProject = await createProject({ name });
       onSuccess(newProject);
       setIsOpen(false); // Close the modal on success
       // Reset form fields for the next time it opens
       setName('');
-      setDescription('');
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred.');
     } finally {
@@ -70,18 +68,6 @@ export function CreateProjectModal({ children, onSuccess }: CreateProjectModalPr
                 className="col-span-3"
                 placeholder="My Awesome Project"
                 required
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="description" className="text-right text-sm text-gray-400">
-                Description
-              </label>
-              <textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="col-span-3 flex min-h-[80px] w-full rounded-md border border-gray-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-gray-500 transition-colors focus:border-[#f45817] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                placeholder="(Optional) A brief description of what this project is for."
               />
             </div>
             {error && (

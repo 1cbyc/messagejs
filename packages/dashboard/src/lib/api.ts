@@ -8,6 +8,8 @@
 
 import {
   ApiErrorResponse,
+  CreateProjectRequest,
+  CreateProjectResponse,
   GetApiKeysResponse,
   GetProjectsResponse,
   LoginRequest,
@@ -112,6 +114,29 @@ export const getProjects = (): Promise<GetProjectsResponse> => {
     headers: {
       Authorization: `Bearer ${token}`,
     },
+  });
+};
+
+/**
+ * Creates a new project for the currently authenticated user.
+ *
+ * @param projectData The data required for project creation.
+ * @returns A promise that resolves with the created project.
+ */
+export const createProject = (
+  projectData: CreateProjectRequest,
+): Promise<CreateProjectResponse> => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    return Promise.reject(new Error('Authentication token not found.'));
+  }
+
+  return apiFetch<CreateProjectResponse>('/projects', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(projectData),
   });
 };
 
