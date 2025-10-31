@@ -59,9 +59,6 @@ app.use('/api/v1/auth', authRouter);
 // Mount the project router for all requests to /api/v1/projects.
 app.use('/api/v1/projects', projectRouter);
 
-// Mount the internal keep-alive router.
-app.use('/api/v1/internal/keep-alive', keepAliveRouter);
-
 // Mount the internal router for operational tasks.
 app.use('/api/v1/internal', internalRouter);
 
