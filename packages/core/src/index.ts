@@ -36,10 +36,21 @@ app.set('trust proxy', true);
 
 // Configure CORS to allow credentials (needed for http-only cookies)
 const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+  ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim()).filter(Boolean)
   : [];
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
+
+// Log CORS configuration on startup for debugging
+logger.info(
+  {
+    nodeEnv: process.env.NODE_ENV,
+    isDevelopment,
+    allowedOriginsCount: allowedOrigins.length,
+    allowedOrigins: allowedOrigins.length > 0 ? allowedOrigins : 'none',
+  },
+  'CORS configuration loaded',
+);
 
 app.use(
   cors({
@@ -47,7 +58,7 @@ app.use(
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
       
-      // In development, allow all origins; in production, check allowedOrigins
+      // In development, allow all origins
       if (isDevelopment) {
         return callback(null, true);
       }
@@ -57,11 +68,13 @@ app.use(
         if (allowedOrigins.includes(origin)) {
           return callback(null, true);
         } else {
+          logger.warn({ origin, allowedOrigins }, 'CORS: Origin not allowed');
           return callback(new Error(`Origin ${origin} is not allowed by CORS`));
         }
       }
       
       // If no origins are configured in production, deny by default for security
+      logger.error('CORS: ALLOWED_ORIGINS must be configured in production');
       callback(new Error('CORS: ALLOWED_ORIGINS must be configured in production'));
     },
     credentials: true, // Allow cookies to be sent
