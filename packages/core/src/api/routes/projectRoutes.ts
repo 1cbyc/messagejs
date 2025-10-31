@@ -13,6 +13,10 @@ import { jwtAuthMiddleware } from '../middleware/jwtAuthMiddleware';
 import { validate } from '../middleware/validationMiddleware';
 import { createProjectSchema } from '../validation/projectValidation';
 import apiKeyRouter from './apiKeyRoutes';
+import { listProjects, createProject } from '../controllers/projectController';
+import { jwtAuthMiddleware } from '../middleware/jwtAuthMiddleware';
+import { validate } from '../middleware/validationMiddleware';
+import { createProjectSchema } from '../validation/projectValidation';
 
 // Create a new Express router instance.
 const projectRouter = Router();
@@ -46,5 +50,18 @@ projectRouter.get('/:id', getProjectById);
 // Mount the apiKeyRouter to handle all routes starting with /:projectId/keys.
 // This creates the nested resource structure (e.g., /api/v1/projects/proj_123/keys).
 projectRouter.use('/:projectId/keys', apiKeyRouter);
+/**
+ * @route   GET /
+ * @desc    Fetches all projects owned by the authenticated user.
+ * @access  Private (requires JWT authentication)
+ */
+projectRouter.get('/', jwtAuthMiddleware, listProjects);
+
+/**
+ * @route   POST /
+ * @desc    Creates a new project for the authenticated user.
+ * @access  Private (requires JWT authentication)
+ */
+projectRouter.post('/', jwtAuthMiddleware, validate(createProjectSchema), createProject);
 
 export default projectRouter;
