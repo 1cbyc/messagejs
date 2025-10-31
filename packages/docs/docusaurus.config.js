@@ -27,7 +27,6 @@ const config = {
         docs: {
           routeBasePath: '/',
           sidebarPath: './sidebars.js',
-          homepageId: 'intro',
         },
         theme: {
           customCss: './src/css/custom.css',
