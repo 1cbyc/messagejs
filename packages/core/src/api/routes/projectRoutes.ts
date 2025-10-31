@@ -4,10 +4,15 @@
  */
 
 import { Router } from 'express';
-import { listProjects, createProject } from '../controllers/projectController';
+import {
+  listProjects,
+  createProject,
+  getProjectById,
+} from '../controllers/projectController';
 import { jwtAuthMiddleware } from '../middleware/jwtAuthMiddleware';
 import { validate } from '../middleware/validationMiddleware';
 import { createProjectSchema } from '../validation/projectValidation';
+import apiKeyRouter from './apiKeyRoutes';
 
 // Create a new Express router instance.
 const projectRouter = Router();
@@ -24,6 +29,24 @@ projectRouter.get('/', jwtAuthMiddleware, listProjects);
  * @desc    Creates a new project for the authenticated user.
  * @access  Private (requires JWT authentication)
  */
-projectRouter.post('/', jwtAuthMiddleware, validate(createProjectSchema), createProject);
+projectRouter.post(
+  '/',
+  jwtAuthMiddleware,
+  validate(createProjectSchema),
+  createProject,
+);
+
+/**
+ * @route   GET /:id
+ * @desc    Get a single project by its ID.
+ * @access  Private
+ */
+projectRouter.get('/:id', jwtAuthMiddleware, getProjectById);
+
+// --- Nested Routes ---
+
+// Mount the apiKeyRouter to handle all routes starting with /:projectId/keys
+// This creates the nested resource structure.
+projectRouter.use('/:projectId/keys', apiKeyRouter);
 
 export default projectRouter;
