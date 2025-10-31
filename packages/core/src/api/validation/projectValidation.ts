@@ -11,8 +11,7 @@ import { z } from 'zod';
  * Zod schema for validating the request body of the `POST /api/v1/projects` endpoint.
  *
  * This schema enforces the following rules:
- * - `name`: Must be a non-empty string with a minimum of 3 characters.
- * - `description`: Optional. If provided, must be a string.
+ * - `name`: Must be a non-empty string with a minimum of 3 characters and maximum of 100 characters.
  */
 export const createProjectSchema = z.object({
   name: z
