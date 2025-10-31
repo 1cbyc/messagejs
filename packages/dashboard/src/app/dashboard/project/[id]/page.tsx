@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getApiKeys, getConnectors } from '@/lib/api';
-import { ApiKeyResponse, ConnectorResponse } from '@messagejs/shared-types';
+import { getApiKeys, getConnectors, getTemplates, deleteTemplate } from '@/lib/api';
+import { ApiKeyResponse, ConnectorResponse, TemplateResponse } from '@messagejs/shared-types';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { FileText, Plus, Trash2 } from 'lucide-react';
 import { CreateApiKeyModal } from '@/components/dashboard/CreateApiKeyModal';
 import { AddConnectorModal } from '@/components/dashboard/AddConnectorModal';
+import { AddTemplateModal } from '@/components/dashboard/AddTemplateModal';
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -17,18 +19,21 @@ export default function ProjectDetailPage() {
 
   const [apiKeys, setApiKeys] = useState<ApiKeyResponse[]>([]);
   const [connectors, setConnectors] = useState<ConnectorResponse[]>([]);
+  const [templates, setTemplates] = useState<TemplateResponse[]>([]);
   const [projectName, setProjectName] = useState<string>('Loading...'); // Placeholder for project name
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchKeys = async () => {
+  const fetchData = async () => {
     try {
-      const [apiKeysResponse, connectorsResponse] = await Promise.all([
+      const [apiKeysResponse, connectorsResponse, templatesResponse] = await Promise.all([
         getApiKeys(projectId),
         getConnectors(projectId),
+        getTemplates(projectId),
       ]);
       setApiKeys(apiKeysResponse.apiKeys);
       setConnectors(connectorsResponse.connectors);
+      setTemplates(templatesResponse.templates);
     } catch (err: any) {
       if (err.message.includes('Authentication token not found')) {
         router.push('/login');
@@ -45,12 +50,23 @@ export default function ProjectDetailPage() {
       setIsLoading(true);
       // TODO: Fetch project name
       setProjectName(`Project Details`);
-      await fetchKeys();
+      await fetchData();
       setIsLoading(false);
     };
 
     initialLoad();
   }, [projectId, router]);
+
+  const handleDeleteTemplate = async (templateId: string) => {
+    if (window.confirm('Are you sure you want to delete this template?')) {
+      try {
+        await deleteTemplate(projectId, templateId);
+        setTemplates(prev => prev.filter(t => t.id !== templateId));
+      } catch (err: any) {
+        setError(err.message || 'Failed to delete template.');
+      }
+    }
+  };
 
   if (isLoading) {
     return (
@@ -85,7 +101,7 @@ export default function ProjectDetailPage() {
       <main className="p-8 mx-auto max-w-7xl">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold">API Keys</h2>
-          <CreateApiKeyModal projectId={projectId} onSuccess={fetchKeys}>
+          <CreateApiKeyModal projectId={projectId} onSuccess={fetchData}>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
               Create API Key
@@ -124,7 +140,7 @@ export default function ProjectDetailPage() {
 
         <div className="mt-12 mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold">Connectors</h2>
-          <AddConnectorModal projectId={projectId} onSuccess={fetchKeys}>
+          <AddConnectorModal projectId={projectId} onSuccess={fetchData}>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
               Add Connector
@@ -157,6 +173,48 @@ export default function ProjectDetailPage() {
             <h3 className="text-lg font-semibold">No Connectors Found</h3>
             <p className="mt-2 text-gray-400">
               Add a connector to start sending messages from this project.
+            </p>
+          </div>
+        )}
+
+        <div className="mt-12 mb-6 flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Message Templates</h2>
+          <AddTemplateModal projectId={projectId} onSuccess={() => fetchData()}>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Template
+            </Button>
+          </AddTemplateModal>
+        </div>
+
+        {templates.length > 0 ? (
+          <div className="overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
+            <ul className="divide-y divide-gray-700">
+              {templates.map((template) => (
+                <li key={template.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-700/50">
+                  <div className="flex items-center space-x-4">
+                    <FileText className="h-5 w-5 text-gray-500" />
+                    <div>
+                      <p className="font-semibold text-sm text-gray-300">{template.name}</p>
+                      <p className="text-xs text-gray-500">
+                        For <span className="capitalize">{template.connectorType.toLowerCase()}</span> - Created on {new Date(template.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <Button variant="destructive" size="sm" onClick={() => handleDeleteTemplate(template.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <div className="rounded-lg border-2 border-dashed border-gray-700 bg-gray-800/50 p-12 text-center">
+            <h3 className="text-lg font-semibold">No Templates Found</h3>
+            <p className="mt-2 text-gray-400">
+              Create your first message template to start sending messages.
             </p>
           </div>
         )}
