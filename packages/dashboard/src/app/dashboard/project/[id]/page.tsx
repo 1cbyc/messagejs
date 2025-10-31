@@ -1,0 +1,121 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { getApiKeys, createApiKey } from '@/lib/api';
+import { ApiKeyResponse } from '@messagejs/shared-types';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { CreateApiKeyModal } from '@/components/dashboard/CreateApiKeyModal';
+
+export default function ProjectDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const { id: projectId } = params as { id: string };
+
+  const [apiKeys, setApiKeys] = useState<ApiKeyResponse[]>([]);
+  const [projectName, setProjectName] = useState<string>('Loading...'); // Placeholder for project name
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchKeys = async () => {
+    try {
+      const response = await getApiKeys(projectId);
+      setApiKeys(response.apiKeys);
+    } catch (err: any) {
+      if (err.message.includes('Authentication token not found')) {
+        router.push('/login');
+      } else {
+        setError(err.message || 'Failed to fetch project data.');
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (!projectId) return;
+
+    const initialLoad = async () => {
+      setIsLoading(true);
+      // TODO: Fetch project name
+      setProjectName(`Project Details`);
+      await fetchKeys();
+      setIsLoading(false);
+    };
+
+    initialLoad();
+  }, [projectId, router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-900 text-white">
+        <p>Loading project details...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-900 text-white">
+        <div className="rounded-md bg-red-900/50 p-4 text-center text-red-300">
+          <p>Error:</p>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-white">
+      <header className="border-b border-gray-700 bg-gray-800 p-4">
+        <div className="mx-auto max-w-7xl">
+          <Link href="/dashboard" className="text-sm text-blue-400 hover:underline">
+            &larr; Back to All Projects
+          </Link>
+          <h1 className="mt-2 text-2xl font-bold truncate">{projectName}</h1>
+        </div>
+      </header>
+
+      <main className="p-8 mx-auto max-w-7xl">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-xl font-semibold">API Keys</h2>
+          <CreateApiKeyModal projectId={projectId} onSuccess={fetchKeys}>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Create API Key
+            </Button>
+          </CreateApiKeyModal>
+        </div>
+
+        {apiKeys.length > 0 ? (
+          <div className="overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
+            <ul className="divide-y divide-gray-700">
+              {apiKeys.map((key) => (
+                <li key={key.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-700/50">
+                  <div>
+                    <p className="font-mono text-sm text-gray-300">{key.publicKey}</p>
+                    <p className="text-xs text-gray-500">
+                      Created on {new Date(key.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div>
+                    <Button variant="destructive" size="sm">
+                      Delete
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <div className="rounded-lg border-2 border-dashed border-gray-700 bg-gray-800/50 p-12 text-center">
+            <h3 className="text-lg font-semibold">No API Keys Found</h3>
+            <p className="mt-2 text-gray-400">
+              Get started by creating your first API key to use with the SDK.
+            </p>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}

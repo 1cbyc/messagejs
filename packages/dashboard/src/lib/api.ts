@@ -8,6 +8,7 @@
 
 import {
   ApiErrorResponse,
+  GetApiKeysResponse,
   GetProjectsResponse,
   LoginRequest,
   LoginResponse,
@@ -108,6 +109,63 @@ export const getProjects = (): Promise<GetProjectsResponse> => {
 
   return apiFetch<GetProjectsResponse>('/projects', {
     method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
+
+/**
+ * Fetches the list of API keys for a specific project.
+ */
+export const getApiKeys = (projectId: string): Promise<GetApiKeysResponse> => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    return Promise.reject(new Error('Authentication token not found.'));
+  }
+
+  return apiFetch<GetApiKeysResponse>(`/projects/${projectId}/keys`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
+
+/**
+ * Creates a new API key for a specific project.
+ * The response will contain the plaintext API key.
+ */
+export const createApiKey = (
+  projectId: string,
+): Promise<{ apiKey: string }> => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    return Promise.reject(new Error('Authentication token not found.'));
+  }
+
+  return apiFetch<{ apiKey: string }>(`/projects/${projectId}/keys`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
+
+/**
+ * Deletes an API key from a project.
+ */
+export const deleteApiKey = (
+  projectId: string,
+  keyId: string,
+): Promise<void> => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    return Promise.reject(new Error('Authentication token not found.'));
+  }
+
+  return apiFetch<void>(`/projects/${projectId}/keys/${keyId}`, {
+    method: 'DELETE',
     headers: {
       Authorization: `Bearer ${token}`,
     },
