@@ -4,7 +4,7 @@ services:
     rootDir: packages/core
     env: node
     buildCommand: cd ../.. && npm install && npm run build --workspace=@messagejs/shared-types && npm run build --workspace=packages/core
-    startCommand: npx prisma migrate deploy && npm start
+    startCommand: npm start
 
   - type: worker
     name: messagejs-worker
