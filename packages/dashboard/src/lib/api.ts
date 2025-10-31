@@ -18,6 +18,9 @@ import {
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
+  CreateTemplateRequest,
+  GetTemplatesResponse,
+  TemplateResponse,
 } from '@messagejs/shared-types';
 
 // The base URL for the API. It defaults to the local development server,
@@ -252,6 +255,66 @@ export const deleteConnector = (
   }
 
   return apiFetch<void>(`/projects/${projectId}/connectors/${connectorId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
+
+/**
+ * Fetches the list of templates for a specific project.
+ */
+export const getTemplates = (
+  projectId: string,
+): Promise<GetTemplatesResponse> => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    return Promise.reject(new Error('Authentication token not found.'));
+  }
+
+  return apiFetch<GetTemplatesResponse>(`/projects/${projectId}/templates`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
+
+/**
+ * Creates a new template for a specific project.
+ */
+export const createTemplate = (
+  projectId: string,
+  templateData: CreateTemplateRequest,
+): Promise<TemplateResponse> => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    return Promise.reject(new Error('Authentication token not found.'));
+  }
+
+  return apiFetch<TemplateResponse>(`/projects/${projectId}/templates`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(templateData),
+  });
+};
+
+/**
+ * Deletes a template from a project.
+ */
+export const deleteTemplate = (
+  projectId: string,
+  templateId: string,
+): Promise<void> => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    return Promise.reject(new Error('Authentication token not found.'));
+  }
+
+  return apiFetch<void>(`/projects/${projectId}/templates/${templateId}`, {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${token}`,
