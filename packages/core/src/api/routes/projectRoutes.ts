@@ -4,14 +4,8 @@
  */
 
 import { Router } from 'express';
-import {
-  listProjects,
-  createProject,
-  getProjectById,
-} from '../controllers/projectController';
+import { listProjects, createProject } from '../controllers/projectController';
 import { jwtAuthMiddleware } from '../middleware/jwtAuthMiddleware';
-import { validate } from '../middleware/validationMiddleware';
-import { createProjectSchema } from '../validation/projectValidation';
 import { validate } from '../middleware/validationMiddleware';
 import { createProjectSchema } from '../validation/projectValidation';
 
