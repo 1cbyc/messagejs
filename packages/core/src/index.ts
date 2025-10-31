@@ -59,6 +59,9 @@ app.use('/api/v1/auth', authRouter);
 // Mount the project router for all requests to /api/v1/projects.
 app.use('/api/v1/projects', projectRouter);
 
+// Mount the internal keep-alive router.
+app.use('/api/v1/internal/keep-alive', keepAliveRouter);
+
 // Mount the internal router for operational tasks.
 app.use('/api/v1/internal', internalRouter);
 
@@ -79,22 +82,22 @@ app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
 // Start the Express server and listen for incoming connections on the specified port.
 app.listen(PORT, () => {
   logger.info({ port: PORT }, 'MessageJS Core API started successfully');
-  
+
   // Start the message worker as a child process for free tier compatibility
   // This allows us to run both API and worker in a single Render service
   const workerProcess = spawn('node', ['dist/queues/messageWorker.js'], {
     stdio: 'inherit',
     env: process.env,
   });
-  
+
   workerProcess.on('error', (err) => {
     logger.error({ err }, 'Failed to start message worker');
   });
-  
+
   workerProcess.on('exit', (code) => {
     logger.warn({ code }, 'Message worker process exited');
   });
-  
+
   // Graceful shutdown - kill worker when API shuts down
   process.on('SIGTERM', () => {
     logger.info('SIGTERM received, shutting down worker...');
