@@ -8,18 +8,8 @@
 import { Request, Response } from 'express';
 import prisma from '../../lib/prisma';
 import logger from '../../lib/logger';
-import { CreateProjectRequest, CreateProjectResponse, GetProjectsResponse, Project } from '@messagejs/shared-types';
+import { CreateProjectRequest, CreateProjectResponse, GetProjectsResponse } from '@messagejs/shared-types';
 
-/**
- * Maps a Prisma Project object (with Date objects) to an API-safe Project
- * object (with ISO date strings).
- * @param project The project object from Prisma.
- * @returns A project object safe for API responses.
- */
-const mapProjectToApiResponse = (project: Project): Project => ({
-  ...project,
-  createdAt: project.createdAt.toISOString(),
-});
 
 /**
  * @controller listProjects
@@ -40,7 +30,7 @@ export const listProjects = async (
       orderBy: { createdAt: 'desc' },
     });
 
-    return res.status(200).json({ projects: projects.map(mapProjectToApiResponse) });
+    return res.status(200).json({ projects });
   } catch (error) {
     logger.error(
       { err: error, userId },
@@ -67,20 +57,19 @@ export const createProject = async (
   res: Response<CreateProjectResponse | { error: any }>,
 ): Promise<Response> => {
   const userId = req.user!.id;
-  const { name, description } = req.body;
+  const { name } = req.body;
 
   try {
     const newProject = await prisma.project.create({
       data: {
         name,
-        description,
         userId,
       },
     });
 
     logger.info({ projectId: newProject.id, userId }, 'Project created successfully');
 
-    return res.status(201).json(mapProjectToApiResponse(newProject));
+    return res.status(201).json(newProject);
   } catch (error) {
     logger.error(
       { err: error, userId, projectName: name },
@@ -122,7 +111,7 @@ export const getProjectById = async (req: Request, res: Response) => {
       });
     }
 
-    return res.status(200).json(mapProjectToApiResponse(project));
+    return res.status(200).json(project);
   } catch (error) {
     logger.error(
       { err: error, userId, projectId },
