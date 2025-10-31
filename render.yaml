@@ -3,12 +3,12 @@ services:
     name: messagejs-api
     rootDir: packages/core
     env: node
-    buildCommand: cd ../.. && npm install && npm run build --workspace=@messagejs/shared-types && npm run build --workspace=packages/core && cd packages/core && npx prisma generate
+    buildCommand: cd ../.. && npm install && npm run build --workspace=@messagejs/shared-types && npm run build --workspace=packages/core
     startCommand: npm start
 
   - type: worker
     name: messagejs-worker
     rootDir: packages/core
     env: node
-    buildCommand: cd ../.. && npm install && npm run build --workspace=@messagejs/shared-types && npm run build --workspace=packages/core && cd packages/core && npx prisma generate
+    buildCommand: cd ../.. && npm install && npm run build --workspace=@messagejs/shared-types && npm run build --workspace=packages/core
     startCommand: npm run start:worker

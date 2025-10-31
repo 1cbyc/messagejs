@@ -6,6 +6,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
+    "postinstall": "prisma generate",
     "build": "tsc",
     "dev": "tsx watch src/index.ts",
     "dev:api": "npm run dev",
