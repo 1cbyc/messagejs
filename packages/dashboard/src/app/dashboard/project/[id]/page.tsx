@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getApiKeys, createApiKey, getConnectors } from '@/lib/api';
+import { getApiKeys, getConnectors } from '@/lib/api';
 import { ApiKeyResponse, ConnectorResponse } from '@messagejs/shared-types';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { CreateApiKeyModal } from '@/components/dashboard/CreateApiKeyModal';
+import { AddConnectorModal } from '@/components/dashboard/AddConnectorModal';
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -123,10 +124,12 @@ export default function ProjectDetailPage() {
 
         <div className="mt-12 mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold">Connectors</h2>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Connector
-          </Button>
+          <AddConnectorModal projectId={projectId} onSuccess={fetchKeys}>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Connector
+            </Button>
+          </AddConnectorModal>
         </div>
 
         {connectors.length > 0 ? (
