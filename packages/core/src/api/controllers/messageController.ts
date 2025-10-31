@@ -6,6 +6,7 @@ import { Request, Response } from 'express';
 import {
   SendMessageSuccessResponse,
   ApiErrorResponse,
+  GetMessagesResponse,
 } from '@messagejs/shared-types';
 import prisma from '../../lib/prisma';
 import { messageQueue } from '../../queues/messageQueue';
@@ -179,6 +180,91 @@ export const sendMessage = async (
       error: {
         code: 'INTERNAL_SERVER_ERROR',
         message: 'An unexpected error occurred while processing your message.',
+      },
+    });
+  }
+};
+
+/**
+ * @controller listMessages
+ * @description Fetches a paginated list of message logs for a specific project.
+ *
+ * @route GET /api/v1/messages
+ * @access Private (requires JWT authentication)
+ */
+export const listMessages = async (req: Request, res: Response<GetMessagesResponse | { error: any }>) => {
+  const userId = req.user!.id;
+  // Project ID is passed as a query parameter for this dashboard route
+  const { projectId, limit = '50', offset = '0' } = req.query;
+
+  if (!projectId || typeof projectId !== 'string') {
+    return res.status(400).json({
+      error: {
+        code: 'BAD_REQUEST',
+        message: 'A `projectId` query parameter is required.',
+      },
+    });
+  }
+
+  try {
+    // First, verify that the project belongs to the authenticated user.
+    const project = await prisma.project.findFirst({
+      where: { id: projectId, userId },
+    });
+
+    if (!project) {
+      return res.status(404).json({
+        error: {
+          code: 'PROJECT_NOT_FOUND',
+          message: 'Project not found or you do not have permission to access it.',
+        },
+      });
+    }
+
+    const take = parseInt(limit as string, 10);
+    const skip = parseInt(offset as string, 10);
+
+    const [messages, total] = await prisma.$transaction([
+      prisma.messageLog.findMany({
+        where: { projectId },
+        orderBy: { timestamp: 'desc' },
+        take: take,
+        skip: skip,
+        include: {
+          service: {
+            select: {
+              type: true,
+            },
+          },
+        },
+      }),
+      prisma.messageLog.count({ where: { projectId } }),
+    ]);
+
+    // Serialize dates and format the response
+    const messagesForApi = messages.map(msg => ({
+      ...msg,
+      timestamp: msg.timestamp.toISOString(),
+      sentAt: msg.sentAt?.toISOString() ?? null,
+      deliveredAt: msg.deliveredAt?.toISOString() ?? null,
+      variables: msg.variables ? JSON.parse(msg.variables as string) : null,
+      serviceType: msg.service.type,
+    }));
+
+    return res.status(200).json({
+      messages: messagesForApi,
+      pagination: {
+        total,
+        limit: take,
+        offset: skip,
+      },
+    });
+  } catch (error) {
+    logger.error({ err: error, userId, projectId }, 'Failed to list message logs.');
+    return res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to retrieve message logs.',
       },
     });
   }
