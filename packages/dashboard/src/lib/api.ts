@@ -21,6 +21,7 @@ import {
   CreateTemplateRequest,
   GetTemplatesResponse,
   TemplateResponse,
+  GetMessagesResponse,
 } from '@messagejs/shared-types';
 
 // The base URL for the API. It defaults to the local development server,
@@ -316,6 +317,33 @@ export const deleteTemplate = (
 
   return apiFetch<void>(`/projects/${projectId}/templates/${templateId}`, {
     method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
+
+/**
+ * Fetches a paginated list of message logs for a specific project.
+ */
+export const getMessages = (
+  projectId: string,
+  limit: number,
+  offset: number,
+): Promise<GetMessagesResponse> => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    return Promise.reject(new Error('Authentication token not found.'));
+  }
+
+  const query = new URLSearchParams({
+    projectId,
+    limit: String(limit),
+    offset: String(offset),
+  }).toString();
+
+  return apiFetch<GetMessagesResponse>(`/messages?${query}`, {
+    method: 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
     },

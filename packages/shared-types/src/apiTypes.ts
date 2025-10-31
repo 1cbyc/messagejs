@@ -124,6 +124,54 @@ export interface GetTemplatesResponse {
   templates: TemplateResponse[];
 }
 
+// --- Template Management API ---
+
+export interface CreateTemplateRequest {
+  name: string;
+  content: string;
+  variables?: string[];
+  connectorType: ConnectorType;
+}
+
+export interface TemplateResponse {
+  id: string;
+  name: string;
+  connectorType: string; // Prisma's `ServiceType` enum
+  body: string; // Note: `content` on request, `body` on response
+  variables: string | null; // Stored as a JSON string
+  createdAt: string;
+}
+
+export interface GetTemplatesResponse {
+  templates: TemplateResponse[];
+}
+
+// --- Message Log API ---
+
+export interface Pagination {
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface MessageLogResponse {
+  id: string;
+  status: string; // Prisma's `MessageStatus` enum
+  recipient: string;
+  externalMessageId: string | null;
+  error: string | null;
+  timestamp: string; // ISO date string
+  variables: Record<string, any> | null;
+  sentAt: string | null;
+  deliveredAt: string | null;
+  serviceType: string;
+}
+
+export interface GetMessagesResponse {
+  messages: MessageLogResponse[];
+  pagination: Pagination;
+}
+
 // Re-export MessageStatus for convenience
 import type { MessageStatus } from './dataModels';
 export type { MessageStatus };
