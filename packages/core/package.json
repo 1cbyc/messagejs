@@ -16,7 +16,11 @@
     "start:worker": "node dist/queues/messageWorker.js",
     "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@messagejs/shared-types": "*",
@@ -49,12 +53,16 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^4.17.21",
     "@types/node": "^20.10.0",
+    "@types/supertest": "^6.0.3",
+    "@vitest/ui": "^4.0.6",
     "dotenv": "^17.2.3",
     "pino-pretty": "^13.1.2",
     "prisma": "^6.18.0",
+    "supertest": "^7.1.4",
     "ts-node": "^10.9.2",
     "tsx": "^4.7.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^4.0.6"
   },
   "prisma": {
     "schema": "prisma/schema.prisma"
