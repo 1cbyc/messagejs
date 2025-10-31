@@ -72,9 +72,6 @@ The system is composed of several key components that work together to deliver t
 │  ┌───────────▼────────────────────┐  │
 │  │  Connector Router              │  │
 │  │  - WhatsAppConnector           │  │
-│  │  - TelegramConnector           │  │
-│  │  - TwilioConnector             │  │
-│  │  - SMTPConnector               │  │
 │  └───────────┬────────────────────┘  │
 └──────────────┼─────────────────────────┘
                │
@@ -97,14 +94,10 @@ The system is composed of several key components that work together to deliver t
 
 ┌─────────────────────────────────────────┐
 │         External APIs                   │
-│  ┌──────────┐  ┌──────────┐            │
-│  │ WhatsApp │  │ Telegram │            │
-│  │ Cloud API│  │ Bot API  │            │
-│  └──────────┘  └──────────┘            │
-│  ┌──────────┐  ┌──────────┐            │
-│  │  Twilio  │  │   SMTP   │            │
-│  │   SMS    │  │  Servers │            │
-│  └──────────┘  └──────────┘            │
+│  ┌──────────┐                          │
+│  │ WhatsApp │                          │
+│  │ Cloud API│                          │
+│  └──────────┘                          │
 └─────────────────────────────────────────┘
 ```
 
@@ -138,8 +131,6 @@ graph TD
 
     subgraph "Third-Party Services"
         F[WhatsApp Cloud API]
-        G[Telegram Bot API]
-        H[Twilio SMS API]
     end
 
     Dev[Developer] -- "Manages Project" --> D
@@ -149,8 +140,6 @@ graph TD
     D -- "Manages (CRUD)" --> E
     C -- "Reads config, Writes logs" --> E
     C -- "Proxies request via Connectors" --> F
-    C -- "Proxies request via Connectors" --> G
-    C -- "Proxies request via Connectors" --> H
 ```
 
 #### Message Sending Sequence Diagram
