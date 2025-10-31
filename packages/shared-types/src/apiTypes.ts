@@ -83,6 +83,22 @@ export interface GetProjectsResponse {
   projects: Project[];
 }
 
+// --- API Key Management ---
+
+/**
+ * The shape of an API key object returned by the `GET /api/v1/projects/:projectId/keys` endpoint.
+ * Note that `createdAt` is a string, as Date objects are serialized to ISO strings.
+ */
+export interface ApiKeyResponse {
+  id: string;
+  publicKey: string;
+  createdAt: string;
+}
+
+export interface GetApiKeysResponse {
+  apiKeys: ApiKeyResponse[];
+}
+
 // Re-export MessageStatus for convenience
 import type { MessageStatus } from './dataModels';
 export type { MessageStatus };

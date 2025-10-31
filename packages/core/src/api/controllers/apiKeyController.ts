@@ -37,7 +37,7 @@ export const listApiKeys = async (req: Request, res: Response) => {
       });
     }
 
-    const apiKeys = await prisma.apiKey.findMany({
+    const apiKeysFromDb = await prisma.apiKey.findMany({
       where: { projectId },
       orderBy: { createdAt: 'desc' },
       // Select only the fields that are safe to expose.
@@ -48,6 +48,12 @@ export const listApiKeys = async (req: Request, res: Response) => {
         createdAt: true,
       },
     });
+
+    // Map the Date object to an ISO string to match the ApiKeyResponse type.
+    const apiKeys = apiKeysFromDb.map(key => ({
+      ...key,
+      createdAt: key.createdAt.toISOString(),
+    }));
 
     return res.status(200).json({ apiKeys });
   } catch (error) {
