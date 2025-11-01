@@ -11,6 +11,15 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
     
+    env:
+      DATABASE_URL: postgresql://test:test@localhost:5432/messagejs_test
+      TEST_DATABASE_URL: postgresql://test:test@localhost:5432/messagejs_test
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: test-jwt-secret-for-ci
+      ENCRYPTION_KEY: bQGilMs8QsC3v8ZIYofamakSIiYYuMDa
+      ALLOWED_ORIGINS: http://localhost:3000
+      NODE_ENV: test
+    
     services:
       postgres:
         image: postgres:15-alpine
@@ -54,28 +63,12 @@ jobs:
 
       - name: Build core package
         run: npm run build --workspace=@messagejs/core
-        env:
-          DATABASE_URL: postgresql://test:test@localhost:5432/messagejs_test
-          REDIS_URL: redis://localhost:6379
-          JWT_SECRET: test-jwt-secret-for-ci
-          ENCRYPTION_KEY: test-encryption-key-32-bytes-long!!
-          ALLOWED_ORIGINS: http://localhost:3000
 
       - name: Run Prisma migrations
         run: cd packages/core && npx prisma migrate deploy
-        env:
-          DATABASE_URL: postgresql://test:test@localhost:5432/messagejs_test
 
       - name: Run tests
         run: npm run test --workspace=@messagejs/core
-        env:
-          DATABASE_URL: postgresql://test:test@localhost:5432/messagejs_test
-          TEST_DATABASE_URL: postgresql://test:test@localhost:5432/messagejs_test
-          REDIS_URL: redis://localhost:6379
-          JWT_SECRET: test-jwt-secret-for-ci
-          ENCRYPTION_KEY: test-encryption-key-32-bytes-long!!
-          ALLOWED_ORIGINS: http://localhost:3000
-          NODE_ENV: test
 
       - name: Run type checking
         run: npm run typecheck --workspaces --if-present
