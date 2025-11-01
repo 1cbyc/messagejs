@@ -5,6 +5,11 @@ services:
     env: node
     buildCommand: cd ../.. && npm install && npm run build --workspace=@messagejs/shared-types && npm run build --workspace=packages/core
     startCommand: npm start
+    envVars:
+      - key: ALLOWED_ORIGINS
+        # Configure CORS origins - update this with your dashboard domain(s)
+        # Multiple origins should be comma-separated: https://app.example.com,https://www.example.com
+        value: https://app.messagejs.pro,https://messagejs.pro
 
   - type: worker
     name: messagejs-worker

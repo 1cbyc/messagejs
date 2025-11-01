@@ -24,9 +24,10 @@ export interface MessageJSConfig {
   baseUrl?: string;
 
   /**
-   * The number of times to retry a failed request. Defaults to 0.
+   * The number of times to retry a failed request. Defaults to 3.
    * Retries are only attempted on 429 (Rate Limit) and 5xx server errors.
-   * @default 0
+   * Uses exponential backoff with jitter.
+   * @default 3
    */
   retries?: number;
 }
@@ -85,7 +86,7 @@ export interface SendResult {
 class MessageJS {
   private apiKey?: string;
   private baseUrl: string = 'https://api.messagejs.pro/api/v1';
-  private retries: number = 0;
+  private retries: number = 3; // Default to 3 retries for reliability
 
   /**
    * Initializes the SDK with your project's public API key and optional configuration.
@@ -128,7 +129,9 @@ class MessageJS {
       try {
         // On subsequent attempts, wait with exponential backoff + jitter.
         if (attempt > 0) {
-          const delay = 100 * Math.pow(2, attempt - 1) + Math.random() * 100;
+          const baseDelay = 100 * Math.pow(2, attempt - 1);
+          const jitter = Math.random() * 100;
+          const delay = baseDelay + jitter;
           await new Promise(resolve => setTimeout(resolve, delay));
         }
 
