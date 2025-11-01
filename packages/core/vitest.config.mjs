@@ -12,12 +12,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: true, // Run tests sequentially to avoid race conditions
-      },
-    },
+    threads: false, // Run tests sequentially to avoid race conditions
     env: {
       NODE_ENV: 'test',
       JWT_SECRET: process.env.JWT_SECRET,
