@@ -3,20 +3,16 @@
  * These tests verify the end-to-end flow from API request to message processing
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
 import request from 'supertest';
 import { createTestApp } from '../app';
-import { testPrisma, cleanDatabase } from '../setup';
+import { testPrisma } from '../setup';
 import { createTestUser, createTestApiKey } from '../helpers';
 import { messageQueue } from '../../queues/messageQueue';
 
 const app = createTestApp();
 
 describe('Message Flow Integration', () => {
-  beforeAll(async () => {
-    await cleanDatabase();
-  });
-
   afterAll(async () => {
     // Clean up any queued jobs - only if queue exists and is connected
     try {

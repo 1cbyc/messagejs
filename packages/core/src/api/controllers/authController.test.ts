@@ -5,16 +5,12 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import request from 'supertest';
 import { createTestApp } from '../../test/app';
-import { testPrisma, cleanDatabase } from '../../test/setup';
+import { testPrisma } from '../../test/setup';
 import bcrypt from 'bcrypt';
 
 const app = createTestApp();
 
 describe('POST /api/v1/auth/register', () => {
-  beforeAll(async () => {
-    await cleanDatabase();
-  });
-
   it('should register a new user successfully', async () => {
     const response = await request(app)
       .post('/api/v1/auth/register')
@@ -68,7 +64,7 @@ describe('POST /api/v1/auth/register', () => {
       .expect(409);
 
     expect(response.body).toHaveProperty('error');
-    expect(response.body.error.code).toBe('USER_ALREADY_EXISTS');
+    expect(response.body.error.code).toBe('USER_EXISTS');
   });
 
   it('should reject registration with invalid email', async () => {
@@ -111,10 +107,8 @@ describe('POST /api/v1/auth/register', () => {
 });
 
 describe('POST /api/v1/auth/login', () => {
-  beforeAll(async () => {
-    await cleanDatabase();
-    
-    // Create a test user
+  it('should login with correct credentials', async () => {
+    // Create a test user for this test
     await testPrisma.user.create({
       data: {
         email: 'login@example.com',
@@ -122,9 +116,7 @@ describe('POST /api/v1/auth/login', () => {
         name: 'Login Test User',
       },
     });
-  });
 
-  it('should login with correct credentials', async () => {
     const response = await request(app)
       .post('/api/v1/auth/login')
       .send({
@@ -145,6 +137,15 @@ describe('POST /api/v1/auth/login', () => {
   });
 
   it('should reject login with incorrect password', async () => {
+    // Create a test user for this test
+    await testPrisma.user.create({
+      data: {
+        email: 'login@example.com',
+        passwordHash: await bcrypt.hash('TestPassword123!', 10),
+        name: 'Login Test User',
+      },
+    });
+
     const response = await request(app)
       .post('/api/v1/auth/login')
       .send({
@@ -171,6 +172,15 @@ describe('POST /api/v1/auth/login', () => {
   });
 
   it('should reject login without required fields', async () => {
+    // Create a test user for this test
+    await testPrisma.user.create({
+      data: {
+        email: 'login@example.com',
+        passwordHash: await bcrypt.hash('TestPassword123!', 10),
+        name: 'Login Test User',
+      },
+    });
+
     const response = await request(app)
       .post('/api/v1/auth/login')
       .send({

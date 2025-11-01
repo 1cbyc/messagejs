@@ -2,19 +2,15 @@
  * @file Unit tests for message endpoints
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { createTestApp } from '../../test/app';
-import { testPrisma, cleanDatabase } from '../../test/setup';
+import { testPrisma } from '../../test/setup';
 import { createTestUser, createTestApiKey } from '../../test/helpers';
 
 const app = createTestApp();
 
 describe('POST /api/v1/messages', () => {
-  beforeAll(async () => {
-    await cleanDatabase();
-  });
-
   it('should require API key authentication', async () => {
     const response = await request(app)
       .post('/api/v1/messages')
@@ -222,10 +218,6 @@ describe('POST /api/v1/messages', () => {
 });
 
 describe('GET /api/v1/messages', () => {
-  beforeAll(async () => {
-    await cleanDatabase();
-  });
-
   it('should require authentication', async () => {
     const response = await request(app)
       .get('/api/v1/messages?projectId=proj123')
