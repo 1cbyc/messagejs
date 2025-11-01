@@ -1,0 +1,8 @@
+src/
+rollup.config.mjs
+tsconfig.json
+*.test.ts
+*.spec.ts
+node_modules/
+.env*
+
