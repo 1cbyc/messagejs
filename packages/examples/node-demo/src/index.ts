@@ -1,4 +1,4 @@
-import messagejs from '@messagejs/client';
+import messagejs from '@nsisong/messagejs';
 
 async function main() {
   messagejs.init({

@@ -54,13 +54,13 @@ MessageJS consists of:
 ### Step 1: Install the SDK
 
 ```bash
-npm install @messagejs/client
+npm install @nsisong/messagejs
 ```
 
 ### Step 2: Initialize
 
 ```typescript
-import { messagejs } from '@messagejs/client';
+import messagejs from '@nsisong/messagejs';
 
 messagejs.init({
   apiKey: 'sk_live_your_api_key',

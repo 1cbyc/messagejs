@@ -82,7 +82,7 @@ MessageJS is built with a modular, scalable architecture that separates concerns
 
 ## Components
 
-### 1. Client SDK (`@messagejs/client`)
+### 1. Client SDK (`@nsisong/messagejs`)
 
 A lightweight TypeScript library for frontend applications.
 

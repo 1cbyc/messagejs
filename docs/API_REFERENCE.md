@@ -847,7 +847,7 @@ browser: <script src="https://cdn.messagejs.pro/v1/messagejs.js"></script>
 ### Initialize
 
 ```typescript
-import { messagejs } from '@messagejs/client';
+import messagejs from '@nsisong/messagejs';
 
 messagejs.init({
   apiKey: 'pk_live_your_api_key',
@@ -862,7 +862,7 @@ messagejs.init({
 All messages are sent using a connector and a template.
 
 ```typescript
-import { messagejs } from '@messagejs/client';
+import messagejs from '@nsisong/messagejs';
 
 try {
   const result = await messagejs.sendMessage({

@@ -45,7 +45,7 @@ packages/core/
 └── prisma/                # Database schema
 ```
 
-### `@messagejs/client`
+### `@nsisong/messagejs`
 
 Frontend SDK for browsers and Node.js.
 

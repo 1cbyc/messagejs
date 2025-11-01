@@ -186,7 +186,7 @@ class MessageJS {
  * A singleton instance of the MessageJS class.
  * Import this instance to use the SDK in your application.
  * @example
- * import { messagejs } from '@messagejs/client';
+ * import messagejs from '@nsisong/messagejs';
  *
  * messagejs.init('pk_live_your_api_key');
  * messagejs.sendMessage({ ... });

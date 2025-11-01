@@ -17,7 +17,7 @@ Get up and running with MessageJS in minutes.
 ## Step 1: Install the SDK
 
 ```bash
-npm install @messagejs/client
+npm install @nsisong/messagejs
 ```
 
 ## Step 2: Create a Project
@@ -31,7 +31,7 @@ Visit [app.messagejs.pro](https://app.messagejs.pro) and:
 ## Step 3: Initialize the SDK
 
 ```typescript
-import messagejs from '@messagejs/client';
+import messagejs from '@nsisong/messagejs';
 
 messagejs.init({
   apiKey: 'sk_live_your_api_key_here',
@@ -56,7 +56,7 @@ console.log('Message sent:', result.id);
 Here's a complete working example:
 
 ```typescript
-import messagejs from '@messagejs/client';
+import messagejs from '@nsisong/messagejs';
 
 // Initialize the SDK
 messagejs.init({

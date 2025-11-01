@@ -175,10 +175,10 @@ export default function HomePage() {
             <div className="rounded-lg border bg-gray-900 p-6">
               <pre className="overflow-x-auto text-sm text-gray-300">
                 <code>{`// 1. Install the SDK
-npm install @messagejs/client
+npm install @nsisong/messagejs
 
 // 2. Initialize
-import { messagejs } from '@messagejs/client';
+import messagejs from '@nsisong/messagejs';
 
 messagejs.init({
   apiKey: 'sk_live_your_api_key',

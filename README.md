@@ -35,7 +35,7 @@ This is a monorepo containing:
 | Package | Description |
 |---------|-------------|
 | `@messagejs/core` | Node.js/Express backend API |
-| `@messagejs/client` | Frontend SDK for browsers & Node.js |
+| `@nsisong/messagejs` | Frontend SDK for browsers & Node.js |
 | `@messagejs/shared-types` | Shared TypeScript types |
 
 ---
@@ -87,7 +87,7 @@ npm run typecheck
 ### 1. Initialize the SDK
 
 ```typescript
-import messagejs from '@messagejs/client';
+import messagejs from '@nsisong/messagejs';
 
 messagejs.init({
   apiKey: 'sk_live_your_api_key',
