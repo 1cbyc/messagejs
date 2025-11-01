@@ -5,6 +5,7 @@
 
 import { afterAll, beforeEach, beforeAll } from 'vitest';
 import { PrismaClient } from '@prisma/client';
+import IORedis from 'ioredis';
 import { validateTestEnvironment, setupTestDatabase } from './test-env-setup';
 
 // Validate test environment on module load
@@ -66,6 +67,30 @@ export async function cleanDatabase() {
 // Setup and teardown hooks
 beforeEach(async () => {
   await cleanDatabase();
+  
+  // Clean up Redis rate limiting keys before each test
+  try {
+    const redisUrl = process.env.REDIS_URL || process.env.TEST_REDIS_URL;
+    if (redisUrl) {
+      const redisClient = new IORedis(redisUrl, {
+        maxRetriesPerRequest: null,
+        lazyConnect: true,
+      });
+      try {
+        await redisClient.connect();
+        // Delete all rate limiter keys
+        const keys = await redisClient.keys('*rate_limit*');
+        if (keys.length > 0) {
+          await redisClient.del(...keys);
+        }
+        await redisClient.quit();
+      } catch (error) {
+        // Ignore Redis errors in test environment
+      }
+    }
+  } catch (error) {
+    // Ignore Redis cleanup errors
+  }
 });
 
 afterAll(async () => {
