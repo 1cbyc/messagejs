@@ -1,17 +1,17 @@
-# @messagejs/client
+# @nsisong/messagejs
 
 MessageJS Client SDK - Send messages via WhatsApp, Telegram, SMS, and more through a simple, unified API.
 
 ## Installation
 
 ```bash
-npm install @messagejs/client
+npm install @nsisong/messagejs
 ```
 
 ## Quick Start
 
 ```typescript
-import messagejs from '@messagejs/client';
+import messagejs from '@nsisong/messagejs';
 
 // Initialize the SDK
 messagejs.init({

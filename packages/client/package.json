@@ -1,6 +1,6 @@
 {
-  "name": "@messagejs/client",
-  "version": "0.1.0",
+  "name": "@nsisong/messagejs",
+  "version": "0.2.0",
   "description": "MessageJS Client SDK - Lightweight SDK for sending messages from web apps",
   "keywords": [
     "messaging",
