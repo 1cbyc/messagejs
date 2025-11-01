@@ -17,10 +17,10 @@
     "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test": "vitest run --config vitest.config.mjs",
+    "test:watch": "vitest --config vitest.config.mjs",
+    "test:ui": "vitest --ui --config vitest.config.mjs",
+    "test:coverage": "vitest run --coverage --config vitest.config.mjs"
   },
   "dependencies": {
     "@messagejs/shared-types": "*",

@@ -1,18 +1,56 @@
 /**
  * @file Test setup and utilities for API testing
+ * Uses real database connections - no mocks
  */
 
-import { afterAll, beforeEach } from 'vitest';
+import { afterAll, beforeEach, beforeAll } from 'vitest';
 import { PrismaClient } from '@prisma/client';
+import { validateTestEnvironment, setupTestDatabase } from './test-env-setup';
 
-// Create a test Prisma client instance
+// Validate test environment on module load
+validateTestEnvironment();
+
+// Ensure we have a database URL for tests
+const databaseUrl = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;
+if (!databaseUrl) {
+  throw new Error(
+    'TEST_DATABASE_URL or DATABASE_URL environment variable is required for tests. ' +
+    'Set TEST_DATABASE_URL=postgresql://user:password@localhost:5432/messagejs_test'
+  );
+}
+
+// Create a test Prisma client instance using the test database
 export const testPrisma = new PrismaClient({
   datasources: {
     db: {
-      url: process.env.TEST_DATABASE_URL || process.env.DATABASE_URL,
+      url: databaseUrl,
     },
   },
+  log: process.env.LOG_LEVEL === 'debug' ? ['query', 'info', 'warn', 'error'] : [],
 });
+
+// Run database migrations and verify connection before all tests
+beforeAll(async () => {
+  // Run migrations to ensure database schema is up to date
+  await setupTestDatabase();
+
+  // Test database connection
+  try {
+    await testPrisma.$connect();
+    // Run a simple query to verify connection
+    await testPrisma.$queryRaw`SELECT 1`;
+    console.log('✅ Test database connection verified');
+  } catch (error) {
+    throw new Error(
+      `Failed to connect to test database at ${databaseUrl.replace(/:[^:]*@/, ':****@')}. ` +
+      `Please ensure:\n` +
+      `1. The database exists: CREATE DATABASE messagejs_test;\n` +
+      `2. The user has proper permissions\n` +
+      `3. The connection string is correct\n` +
+      `Error: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}, 30000); // 30 second timeout for setup
 
 // Clean database before each test
 export async function cleanDatabase() {

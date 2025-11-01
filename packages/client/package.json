@@ -42,8 +42,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {},
-  "peerDependencies": {
+  "dependencies": {
     "@messagejs/shared-types": "*"
   },
   "devDependencies": {

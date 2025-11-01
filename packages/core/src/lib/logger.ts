@@ -20,22 +20,25 @@ const environment = process.env.NODE_ENV ?? 'development';
 /**
  * Determine if we should use pretty printing for logs
  * Pretty printing is enabled in development for better readability
+ * Disabled in test environment to avoid Node.js version compatibility issues with pino-pretty
  */
 const isDevelopment = environment === 'development';
+const isTest = environment === 'test';
 
 /**
  * The main logger instance.
  *
  * Configuration:
- * - `level`: Set via LOG_LEVEL env var, defaults to 'info'
+ * - `level`: Set via LOG_LEVEL env var, defaults to 'info', 'silent' in test
  * - `transport`: Only in development - uses pino-pretty for readable console output
  * - `formatters`: Customize how logs are formatted
  * - `timestamp`: Add timestamps to all log entries
  * - `redact`: Remove sensitive information from logs
  */
 const logger = pino({
-  level: process.env.LOG_LEVEL ?? 'info',
-  transport: isDevelopment
+  level: process.env.LOG_LEVEL ?? (isTest ? 'silent' : 'info'),
+  // Only use pino-pretty in development (not test) to avoid Node.js version issues
+  transport: isDevelopment && !isTest
     ? {
         target: 'pino-pretty',
         options: {

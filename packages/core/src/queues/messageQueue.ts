@@ -32,8 +32,34 @@ export interface MessageJobData {
 // Create a single, reusable Redis connection instance for BullMQ.
 // Using a single connection instance is a best practice for efficiency.
 // `maxRetriesPerRequest: null` is recommended by the BullMQ documentation.
-const redisConnection = new IORedis(process.env.REDIS_URL!, {
+// In test environment, handle connection errors gracefully
+const redisUrl = process.env.REDIS_URL;
+if (!redisUrl) {
+  throw new Error('REDIS_URL environment variable is required');
+}
+
+const redisConnection = new IORedis(redisUrl, {
   maxRetriesPerRequest: null,
+  enableReadyCheck: true,
+  lazyConnect: process.env.NODE_ENV === 'test', // Lazy connect in test to avoid errors if Redis isn't running
+  retryStrategy: (times) => {
+    // In test, don't retry - fail fast
+    if (process.env.NODE_ENV === 'test') {
+      return null;
+    }
+    const delay = Math.min(times * 50, 2000);
+    return delay;
+  },
+});
+
+// Handle connection errors gracefully, especially in test environment
+redisConnection.on('error', (err) => {
+  if (process.env.NODE_ENV === 'test') {
+    // In tests, log but don't throw - allows tests to run without Redis if not needed
+    logger.warn({ err }, 'Redis connection error in test environment');
+  } else {
+    logger.error({ err }, 'Redis connection error');
+  }
 });
 
 /**
