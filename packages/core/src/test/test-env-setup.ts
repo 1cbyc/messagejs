@@ -3,7 +3,6 @@
  * This file ensures all required services are available and properly configured for tests
  */
 
-import { execSync } from 'child_process';
 import { existsSync } from 'fs';
 import { join } from 'path';
 
