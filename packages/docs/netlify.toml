@@ -1,0 +1,18 @@
+[build]
+  base = "packages/docs"
+  command = "cd ../../ && npm install && npm run build --workspace=packages/docs"
+  publish = "packages/docs/build"
+
+[[plugins]]
+  package = "@netlify/plugin-lighthouse"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_VERSION = "10"
+
+# SPA fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+

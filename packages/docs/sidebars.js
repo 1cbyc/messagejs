@@ -28,7 +28,7 @@ module.exports = {
       type: 'category',
       label: 'Examples',
       items: [
-        'examples/overview',
+        'examples/examples-overview',
         'examples/react-demo',
         'examples/node-demo',
       ],
