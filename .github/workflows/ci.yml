@@ -94,3 +94,13 @@ jobs:
       - name: Build all packages
         run: npm run build --workspaces --if-present
 
+      - name: Verify builds produced output
+        run: |
+          echo "Checking build artifacts..."
+          [ -d "packages/client/dist" ] && echo "✅ Client built" || (echo "❌ Client build failed" && exit 1)
+          [ -d "packages/core/dist" ] && echo "✅ Core built" || (echo "❌ Core build failed" && exit 1)
+          [ -d "packages/shared-types/dist" ] && echo "✅ Shared types built" || (echo "❌ Shared types build failed" && exit 1)
+          [ -d "packages/dashboard/.next" ] && echo "✅ Dashboard built" || (echo "❌ Dashboard build failed" && exit 1)
+          [ -d "packages/docs/build" ] && echo "✅ Docs built" || (echo "❌ Docs build failed" && exit 1)
+          echo "✅ All packages built successfully"
+

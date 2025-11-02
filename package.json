@@ -10,6 +10,7 @@
     "build": "npm run build --workspaces --if-present",
     "build:core": "npm run build --workspace=@messagejs/shared-types && npm run build --workspace=@messagejs/core",
     "build:all": "npm run build --workspaces --if-present || true",
+    "precheck": "npm run build --workspaces --if-present && echo '✅ All builds passed'",
     "dev": "npm run dev --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
