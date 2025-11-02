@@ -24,5 +24,19 @@ module.exports = {
         'technology-stack',
       ],
     },
+    {
+      type: 'category',
+      label: 'Examples',
+      items: [
+        'examples/overview',
+        'examples/react-demo',
+        'examples/node-demo',
+      ],
+    },
+    {
+      type: 'doc',
+      id: 'troubleshooting',
+      label: 'Troubleshooting',
+    },
   ],
 };
