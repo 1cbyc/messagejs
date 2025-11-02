@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import Link from 'next/link';
 import { getApiKeys, getConnectors, getTemplates, deleteTemplate } from '@/lib/api';
 import { ApiKeyResponse, ConnectorResponse, TemplateResponse } from '@messagejs/shared-types';
@@ -10,6 +11,7 @@ import { FileText, Plus, Trash2 } from 'lucide-react';
 import { CreateApiKeyModal } from '@/components/dashboard/CreateApiKeyModal';
 import { AddConnectorModal } from '@/components/dashboard/AddConnectorModal';
 import { AddTemplateModal } from '@/components/dashboard/AddTemplateModal';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -61,16 +63,47 @@ export default function ProjectDetailPage() {
       try {
         await deleteTemplate(projectId, templateId);
         setTemplates(prev => prev.filter(t => t.id !== templateId));
+        toast.success('Template deleted', {
+          description: 'The template has been removed from your project.',
+        });
       } catch (err: any) {
-        setError(err.message || 'Failed to delete template.');
+        toast.error('Failed to delete template', {
+          description: err.message || 'An unexpected error occurred.',
+        });
       }
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-900 text-white">
-        <p>Loading project details...</p>
+      <div className="min-h-screen bg-gray-900 text-white">
+        <header className="border-b border-gray-700 bg-gray-800 p-4">
+          <div className="mx-auto max-w-7xl">
+            <Skeleton className="h-4 w-32 mb-4" />
+            <Skeleton className="h-8 w-64" />
+          </div>
+        </header>
+        <main className="p-8 mx-auto max-w-7xl">
+          <div className="mb-8 flex gap-4">
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+          <div className="mb-6">
+            <Skeleton className="h-7 w-32 mb-6" />
+            <div className="space-y-2">
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+            </div>
+          </div>
+          <div className="mt-12 mb-6">
+            <Skeleton className="h-7 w-32 mb-6" />
+            <div className="space-y-2">
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+            </div>
+          </div>
+        </main>
       </div>
     );
   }

@@ -8,6 +8,7 @@ import { Project } from '@messagejs/shared-types';
 import { Button } from '@/components/ui/button';
 import { CreateProjectModal } from '@/components/dashboard/CreateProjectModal';
 import { Plus } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -48,8 +49,26 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-900 text-white">
-        <p>Loading dashboard...</p>
+      <div className="min-h-screen bg-gray-900 text-white">
+        <header className="border-b border-gray-700 bg-gray-800 p-4 shadow-md">
+          <div className="mx-auto max-w-7xl">
+            <h1 className="text-2xl font-bold">Dashboard</h1>
+          </div>
+        </header>
+        <main className="p-8 mx-auto max-w-7xl">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Your Projects</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-lg bg-gray-800 p-4">
+                <Skeleton className="h-5 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+            ))}
+          </div>
+        </main>
       </div>
     );
   }

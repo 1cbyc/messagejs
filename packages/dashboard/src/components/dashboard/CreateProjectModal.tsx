@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import {
   Modal,
   ModalContent,
@@ -24,13 +25,11 @@ interface CreateProjectModalProps {
 export function CreateProjectModal({ children, onSuccess }: CreateProjectModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    setError(null);
 
     try {
       const newProject = await createProject({ name });
@@ -38,8 +37,13 @@ export function CreateProjectModal({ children, onSuccess }: CreateProjectModalPr
       setIsOpen(false); // Close the modal on success
       // Reset form fields for the next time it opens
       setName('');
+      toast.success('Project created successfully', {
+        description: `${name} has been created.`,
+      });
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
+      toast.error('Failed to create project', {
+        description: err.message || 'An unexpected error occurred.',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -70,11 +74,6 @@ export function CreateProjectModal({ children, onSuccess }: CreateProjectModalPr
                 required
               />
             </div>
-            {error && (
-              <div className="col-span-4 rounded-md border border-red-500/50 bg-red-500/10 p-3 text-center text-sm text-red-400">
-                {error}
-              </div>
-            )}
           </div>
           <ModalFooter>
             <Button
