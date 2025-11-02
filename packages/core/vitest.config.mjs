@@ -14,6 +14,9 @@ export default defineConfig({
     environment: 'node',
     threads: false, // Disable threading completely
     maxConcurrency: 1, // Run one test at a time
+    sequence: {
+      concurrent: false, // Disable concurrent test execution
+    },
     env: {
       NODE_ENV: 'test',
       JWT_SECRET: process.env.JWT_SECRET,

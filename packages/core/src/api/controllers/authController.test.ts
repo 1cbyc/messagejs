@@ -206,7 +206,10 @@ describe('POST /api/v1/auth/logout', () => {
     const cookies = response.headers['set-cookie'];
     if (cookies && cookies.length > 0) {
       expect(cookies[0]).toContain('authToken=');
-      expect(cookies[0]).toContain('Max-Age=0'); // Cookie expired
+      // Cookie should be expired - check for either Max-Age=0 or Expires in the past
+      expect(
+        cookies[0].includes('Max-Age=0') || cookies[0].includes('Expires=Thu, 01 Jan 1970')
+      ).toBe(true);
     }
   });
 });
