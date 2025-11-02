@@ -6,6 +6,8 @@ services:
     buildCommand: cd ../.. && npm install && npm run build --workspace=@messagejs/shared-types && npm run build --workspace=packages/core
     startCommand: npm start
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: ALLOWED_ORIGINS
         # Configure CORS origins - update this with your dashboard domain(s)
         # Multiple origins should be comma-separated: https://app.example.com,https://www.example.com
