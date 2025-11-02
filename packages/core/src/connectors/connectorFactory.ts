@@ -11,6 +11,7 @@ import { ConnectorType, IConnector } from '@messagejs/shared-types';
 import { ServiceType } from '@prisma/client';
 import { toServiceType } from '../utils/type-mapping';
 import { WhatsAppConnector } from './whatsappConnector';
+import { TelegramConnector } from './telegramConnector';
 
 // Define a type for the decrypted credentials object for better type safety.
 // Each connector will expect a different structure.
@@ -39,8 +40,8 @@ export class ConnectorFactory {
       case ServiceType.WHATSAPP:
         return new WhatsAppConnector(credentials);
 
-      // case ServiceType.TELEGRAM:
-      //   return new TelegramConnector(credentials); // Example for a future connector
+      case ServiceType.TELEGRAM:
+        return new TelegramConnector(credentials);
 
       // case ServiceType.TWILIO_SMS:
       //   return new TwilioConnector(credentials); // Example for a future connector
